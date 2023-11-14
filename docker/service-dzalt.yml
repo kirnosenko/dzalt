@@ -1,0 +1,19 @@
+version: '3.8'
+
+services:
+  
+  dzalt:
+    image: kirnosenko/dzalt
+    container_name: dzalt
+    deploy:
+      restart_policy:
+        condition: on-failure
+    ports:
+      - "5000:80"
+    environment:
+      - DZALT_HOME_PATH=/root/data
+      - DZALT_LOGS_PATH=/root/repo
+    volumes:
+      - ${DZALT_HOME_PATH}:/root/data
+      - ${DZALT_LOGS_PATH}:/root/repo:ro,cached
+      

@@ -1,0 +1,43 @@
+﻿
+Microsoft Visual Studio Solution File, Format Version 12.00
+# Visual Studio Version 17
+VisualStudioVersion = 17.7.34202.233
+MinimumVisualStudioVersion = 10.0.40219.1
+Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "DZALT", "DZALT\DZALT.csproj", "{D36A1B32-EF13-4560-895A-3B673FF0AC80}"
+EndProject
+Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "DZALT.Tests", "DZALT.Tests\DZALT.Tests.csproj", "{1AEE672F-7B6C-49A5-9CC4-F099B10E73EB}"
+EndProject
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "DZALT.Entities.Persistent.Postgres", "DZALT.Entities.Persistent.Postgres\DZALT.Entities.Persistent.Postgres.csproj", "{69A050D0-34A5-4900-9FAB-ACEF6422B245}"
+EndProject
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "DZALT.Web", "DZALT.Web\DZALT.Web.csproj", "{4AD5F9B8-AA87-4309-AF2A-4AFAED5059C6}"
+EndProject
+Global
+	GlobalSection(SolutionConfigurationPlatforms) = preSolution
+		Debug|Any CPU = Debug|Any CPU
+		Release|Any CPU = Release|Any CPU
+	EndGlobalSection
+	GlobalSection(ProjectConfigurationPlatforms) = postSolution
+		{D36A1B32-EF13-4560-895A-3B673FF0AC80}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{D36A1B32-EF13-4560-895A-3B673FF0AC80}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{D36A1B32-EF13-4560-895A-3B673FF0AC80}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{D36A1B32-EF13-4560-895A-3B673FF0AC80}.Release|Any CPU.Build.0 = Release|Any CPU
+		{1AEE672F-7B6C-49A5-9CC4-F099B10E73EB}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{1AEE672F-7B6C-49A5-9CC4-F099B10E73EB}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{1AEE672F-7B6C-49A5-9CC4-F099B10E73EB}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{1AEE672F-7B6C-49A5-9CC4-F099B10E73EB}.Release|Any CPU.Build.0 = Release|Any CPU
+		{69A050D0-34A5-4900-9FAB-ACEF6422B245}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{69A050D0-34A5-4900-9FAB-ACEF6422B245}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{69A050D0-34A5-4900-9FAB-ACEF6422B245}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{69A050D0-34A5-4900-9FAB-ACEF6422B245}.Release|Any CPU.Build.0 = Release|Any CPU
+		{4AD5F9B8-AA87-4309-AF2A-4AFAED5059C6}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{4AD5F9B8-AA87-4309-AF2A-4AFAED5059C6}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{4AD5F9B8-AA87-4309-AF2A-4AFAED5059C6}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{4AD5F9B8-AA87-4309-AF2A-4AFAED5059C6}.Release|Any CPU.Build.0 = Release|Any CPU
+	EndGlobalSection
+	GlobalSection(SolutionProperties) = preSolution
+		HideSolutionNode = FALSE
+	EndGlobalSection
+	GlobalSection(ExtensibilityGlobals) = postSolution
+		SolutionGuid = {1432ABCE-3031-4335-BA4A-533AED720914}
+	EndGlobalSection
+EndGlobal
