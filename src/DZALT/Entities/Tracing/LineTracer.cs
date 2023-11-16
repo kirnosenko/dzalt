@@ -43,6 +43,10 @@ namespace DZALT.Entities.Tracing
 				string guid = match.Groups["guid"].Value;
 
 				var player = await GetPlayer(guid, cancellationToken);
+				if (player == null)
+				{
+					return null;
+				}
 				var nick = await GetNickname(player, nickname, cancellationToken);
 
 				return GetSessionStart(player, time);
@@ -55,7 +59,11 @@ namespace DZALT.Entities.Tracing
 				string guid = match.Groups["guid"].Value;
 
 				var player = await GetPlayer(guid, cancellationToken);
-				
+				if (player == null)
+				{
+					return null;
+				}
+
 				return GetSessioEnd(player, time);
 			}
 
@@ -66,6 +74,11 @@ namespace DZALT.Entities.Tracing
 			string guid,
 			CancellationToken cancellationToken)
         {
+			if (guid == "Unknown")
+			{
+				return null;
+			}
+
             if (!players.TryGetValue(guid, out var player))
             {
 				player = await repository.GetUpdatable<Player>()

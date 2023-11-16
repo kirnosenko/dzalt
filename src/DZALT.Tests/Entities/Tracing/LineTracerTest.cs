@@ -56,6 +56,18 @@ namespace DZALT.Tests.Entities.Tracing
 			nicknames.Should().Be(2);
 		}
 
+		[Fact]
+		public async Task ShouldNotAddUnknownPlayer()
+		{
+			var log = await tracer.Trace(
+				$"11:23:45 | Player \"Survivor\"(id=Unknown) has been disconnected",
+				CancellationToken.None);
+			await SubmitChanges();
+
+			log.Should().BeNull();
+			(await Get<Player>().SingleOrDefaultAsync()).Should().BeNull();
+		}
+
 		[Theory]
 		[InlineData("Survivor")]
 		[InlineData("Survivor (1)")]
