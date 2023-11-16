@@ -115,6 +115,28 @@ namespace DZALT.Entities.Tracing
 		}
 
 		[Fact]
+		public async Task ShouldIgnoreNullLog()
+		{
+			fileTracer.FileLines = new string[]
+			{
+				"AdminLog started on 2023-11-16 at 12:23:45",
+				"line1",
+				"line2",
+				"line3",
+			};
+			lineTracer.Trace(
+				Arg.Any<string>(),
+				Arg.Any<CancellationToken>())
+				.Returns(ci => (ci[0] as string) == "line2" ? null : new SessionLog());
+
+			await fileTracer.Trace("filename", default);
+
+			await lineTracer.Received(3).Trace(
+				Arg.Any<string>(),
+				Arg.Any<CancellationToken>());
+		}
+
+		[Fact]
 		public async Task ShouldSaveLogFileDataWithProcessedData()
 		{
 			var log1 = new SessionLog()

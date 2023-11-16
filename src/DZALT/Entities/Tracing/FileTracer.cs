@@ -57,18 +57,21 @@ namespace DZALT.Entities.Tracing
 					else
 					{
 						var log = await lineTracer.Trace(line, cancellationToken);
-						var logTime = TimeOnly.FromDateTime(log.Date);
-
-						if (logTime < time)
+						if (log != null)
 						{
-							date = date.AddDays(1);
-						}
+							var logTime = TimeOnly.FromDateTime(log.Date);
 
-						time = logTime;
-						log.Date = date.ToDateTime(time);
-						if (dateFrom == DateTime.MinValue)
-						{
-							dateFrom = log.Date;
+							if (logTime < time)
+							{
+								date = date.AddDays(1);
+							}
+
+							time = logTime;
+							log.Date = date.ToDateTime(time);
+							if (dateFrom == DateTime.MinValue)
+							{
+								dateFrom = log.Date;
+							}
 						}
 					}
 				}
