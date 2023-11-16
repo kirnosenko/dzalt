@@ -69,6 +69,7 @@ namespace DZALT.Entities.Persistent
 
 		protected override void OnModelCreating(ModelBuilder modelBuilder)
 		{
+			modelBuilder.ApplyConfiguration(new LogFileMapping());
 			modelBuilder.ApplyConfiguration(new PlayerMapping());
 			modelBuilder.ApplyConfiguration(new NicknameMapping());
 			modelBuilder.ApplyConfiguration(new SessionLogMapping());

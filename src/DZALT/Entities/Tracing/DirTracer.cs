@@ -1,6 +1,9 @@
-﻿using System.IO;
+﻿using System;
+using System.IO;
+using System.Linq;
 using System.Threading;
 using System.Threading.Tasks;
+using Microsoft.EntityFrameworkCore;
 
 namespace DZALT.Entities.Tracing
 {
@@ -11,23 +14,45 @@ namespace DZALT.Entities.Tracing
 
 	public class DirTracer : IDirTracer
     {
+		private readonly IRepository repository;
 		private readonly IFileTracer fileTracer;
 
-		public DirTracer(IFileTracer fileTracer)
+		public DirTracer(
+			IRepository repository,
+			IFileTracer fileTracer)
 		{
+			this.repository = repository;
 			this.fileTracer = fileTracer;
 		}
 
 		public async Task Trace(string dir, CancellationToken cancellationToken)
 		{
-			if (Directory.Exists(dir))
+			var files = GetFiles(dir);
+
+			if (files.Length > 0)
 			{
-				var files = Directory.GetFiles(dir, "*.ADM");
-				foreach (var file in files)
+				var filesOld = await repository.Get<LogFile>()
+					.Select(x => x.Name)
+					.ToArrayAsync(cancellationToken);
+				var filesNew = files
+					.Where(x => !filesOld.Contains(Path.GetFileNameWithoutExtension(x)))
+					.ToArray();
+
+				foreach (var file in filesNew)
 				{
 					await fileTracer.Trace(file, cancellationToken);
 				}
 			}
+		}
+
+		protected virtual string[] GetFiles(string dir)
+		{
+			if (Directory.Exists(dir))
+			{
+				return Directory.GetFiles(dir, "*.ADM");
+			}
+
+			return Array.Empty<string>();
 		}
 	}
 }
