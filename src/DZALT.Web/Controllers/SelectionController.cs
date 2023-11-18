@@ -3,8 +3,7 @@ using System.Threading.Tasks;
 using Asp.Versioning;
 using Microsoft.AspNetCore.Mvc;
 using MediatR;
-using DZALT.Entities.Tracing;
-using DZALT.Entities.Tracing.TraceLogs;
+using DZALT.Entities.Selection.PlayTimeByPlayer;
 
 namespace DZALT.Web.Controllers
 {
@@ -12,22 +11,23 @@ namespace DZALT.Web.Controllers
 	[Produces("application/json")]
 	[ApiVersion("1.0")]
 	[Route("api/v{version:apiVersion}/[controller]")]
-	public class TraceController : ControllerBase
+	public class SelectionController : ControllerBase
 	{
 		private readonly IMediator mediator;
 
-		public TraceController(IMediator mediator)
+		public SelectionController(IMediator mediator)
 		{
 			this.mediator = mediator;
 		}
 
-		[HttpPost]
+		[HttpGet]
 		[Route("[action]")]
-		public async Task<IActionResult> Trace()
+		public async Task<IActionResult> PlayTimeByPlayerHandler(
+			CancellationToken cancellationToken)
 		{
-			await mediator.Send(TraceLogsCommand.Create());
+			var data = await mediator.Send(PlayTimeByPlayerQuery.Instance, cancellationToken);
 
-			return Ok();
+			return Ok(data);
 		}
 	}
 }

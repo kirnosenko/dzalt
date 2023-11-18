@@ -14,7 +14,6 @@
   </ItemGroup>
 
   <ItemGroup>
-    <Folder Include="Entities\Selection\" />
     <Folder Include="Entities\Persistent\" />
   </ItemGroup>
 

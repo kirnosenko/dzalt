@@ -1,10 +1,7 @@
 ﻿using System;
-using System.IO;
-using System.Net.Http;
 using Asp.Versioning.ApiExplorer;
 using Autofac;
 using Microsoft.AspNetCore.Builder;
-using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.DependencyInjection;
 using DZALT.Entities.Persistent.Postgres;
@@ -40,6 +37,8 @@ namespace DZALT.Web
 			IApplicationBuilder app,
 			IApiVersionDescriptionProvider provider)
 		{
+			app.UseMiddleware<TimerMiddleware>();
+
             app.UseDefaultFiles();
 			app.UseStaticFiles();
             
