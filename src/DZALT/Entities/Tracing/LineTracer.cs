@@ -1,5 +1,6 @@
 ﻿using System;
 using System.Collections.Generic;
+using System.IO;
 using System.Linq;
 using System.Text.RegularExpressions;
 using System.Threading;
@@ -39,6 +40,11 @@ namespace DZALT.Entities.Tracing
 
         public async Task<Log> Trace(string log, CancellationToken cancellationToken)
         {
+			if (!log.Contains("| Player"))
+			{
+				return null;
+			}
+
 			Match match = null;
 
 			match = PlayerHitExp.Match(log);
@@ -50,36 +56,16 @@ namespace DZALT.Entities.Tracing
 			match = PlayerConnectedExp.Match(log);
             if (match.Success)
             {
-				string time = match.Groups["time"].Value;
-				string nickname = match.Groups["nickname"].Value;
-				string guid = match.Groups["guid"].Value;
-
-				var player = await GetPlayer(guid, cancellationToken);
-				if (player == null)
-				{
-					return null;
-				}
-				var nick = await GetNickname(player, nickname, cancellationToken);
-
-				return GetSessionStart(player, time);
+				return await GetSessionStart(match, cancellationToken);
 			}
 
 			match = PlayerDisconnectedExp.Match(log);
 			if (match.Success)
 			{
-				string time = match.Groups["time"].Value;
-				string guid = match.Groups["guid"].Value;
-
-				var player = await GetPlayer(guid, cancellationToken);
-				if (player == null)
-				{
-					return null;
-				}
-
-				return GetSessioEnd(player, time);
+				return await GetSessionEnd(match, cancellationToken);
 			}
 
-			return null;
+			throw new ApplicationException($"Could not trace log: {log}");
 		}
 
         private async Task<Player> GetPlayer(
@@ -147,27 +133,43 @@ namespace DZALT.Entities.Tracing
 			return nick;
 		}
 
-		private SessionLog GetSessionStart(Player player, string time)
+		private async Task<SessionLog> GetSessionStart(Match match, CancellationToken cancellationToken)
 		{
-			var sessionLog = new SessionLog()
+			string time = match.Groups["time"].Value;
+			string nickname = match.Groups["nickname"].Value;
+			string guid = match.Groups["guid"].Value;
+
+			var player = await GetPlayer(guid, cancellationToken);
+			if (player == null)
 			{
-				Player = player,
-				Date = new DateTime(0) + TimeOnly.Parse(time).ToTimeSpan(),
-				Type = SessionLog.Reason.CONNECTED,
-			};
+				return null;
+			}
+			var nick = await GetNickname(player, nickname, cancellationToken);
 
-			repository.Add(sessionLog);
-
-			return sessionLog;
+			return GetSession(player, time, SessionLog.SessionType.CONNECTED);
 		}
 
-		private SessionLog GetSessioEnd(Player player, string time)
+		private async Task<SessionLog> GetSessionEnd(Match match, CancellationToken cancellationToken)
+		{
+			string time = match.Groups["time"].Value;
+			string guid = match.Groups["guid"].Value;
+
+			var player = await GetPlayer(guid, cancellationToken);
+			if (player == null)
+			{
+				return null;
+			}
+
+			return GetSession(player, time, SessionLog.SessionType.DISCONNECTED);
+		}
+
+		private SessionLog GetSession(Player player, string time, SessionLog.SessionType type)
 		{
 			var sessionLog = new SessionLog()
 			{
 				Player = player,
 				Date = new DateTime(0) + TimeOnly.Parse(time).ToTimeSpan(),
-				Type = SessionLog.Reason.DISCONNECTED,
+				Type = type,
 			};
 
 			repository.Add(sessionLog);

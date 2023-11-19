@@ -31,37 +31,37 @@ namespace DZALT.Entities.Selection.PlayTimeByPlayer
 				new SessionLog()
 				{
 					Player = p1,
-					Type = SessionLog.Reason.CONNECTED,
+					Type = SessionLog.SessionType.CONNECTED,
 					Date = new DateTime(2023, 11, 11, 10, 00, 00),
 				},
 				new SessionLog()
 				{
 					Player = p2,
-					Type = SessionLog.Reason.CONNECTED,
+					Type = SessionLog.SessionType.CONNECTED,
 					Date = new DateTime(2023, 11, 11, 11, 00, 00),
 				},
 				new SessionLog()
 				{
 					Player = p2,
-					Type = SessionLog.Reason.DISCONNECTED,
+					Type = SessionLog.SessionType.DISCONNECTED,
 					Date = new DateTime(2023, 11, 11, 12, 30, 30),
 				},
 				new SessionLog()
 				{
 					Player = p1,
-					Type = SessionLog.Reason.DISCONNECTED,
+					Type = SessionLog.SessionType.DISCONNECTED,
 					Date = new DateTime(2023, 11, 12, 00, 00, 00),
 				},
 				new SessionLog()
 				{
 					Player = p1,
-					Type = SessionLog.Reason.CONNECTED,
+					Type = SessionLog.SessionType.CONNECTED,
 					Date = new DateTime(2023, 11, 12, 01, 00, 00),
 				},
 				new SessionLog()
 				{
 					Player = p1,
-					Type = SessionLog.Reason.DISCONNECTED,
+					Type = SessionLog.SessionType.DISCONNECTED,
 					Date = new DateTime(2023, 11, 12, 01, 00, 10),
 				},
 			};

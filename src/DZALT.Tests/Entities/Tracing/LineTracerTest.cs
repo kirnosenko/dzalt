@@ -106,8 +106,8 @@ namespace DZALT.Tests.Entities.Tracing
 			var sessionLogs = await Get<SessionLog>().ToArrayAsync();
 
 			sessionLogs.Length.Should().Be(4);
-			sessionLogs.Where(x => x.Type == SessionLog.Reason.CONNECTED).Count().Should().Be(2);
-			sessionLogs.Where(x => x.Type == SessionLog.Reason.DISCONNECTED).Count().Should().Be(2);
+			sessionLogs.Where(x => x.Type == SessionLog.SessionType.CONNECTED).Count().Should().Be(2);
+			sessionLogs.Where(x => x.Type == SessionLog.SessionType.DISCONNECTED).Count().Should().Be(2);
 			sessionLogs.Select(x => x.Date).Should().BeEquivalentTo(new DateTime[]
 			{
 				new DateTime(1, 1, 1, 11, 23, 45),

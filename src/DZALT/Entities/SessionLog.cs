@@ -1,15 +1,13 @@
-﻿using System;
-
-namespace DZALT.Entities
+﻿namespace DZALT.Entities
 {
 	public class SessionLog : Log
 	{
-		public enum Reason
+		public enum SessionType
 		{
 			CONNECTED = 0,
 			DISCONNECTED = 1,
 		}
 
-		public Reason Type { get; set; }
+		public SessionType Type { get; set; }
 	}
 }

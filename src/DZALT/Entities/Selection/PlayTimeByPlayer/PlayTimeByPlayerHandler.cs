@@ -35,9 +35,9 @@ namespace DZALT.Entities.Selection.PlayTimeByPlayer
 
 			var playerSessions = await (
 				from sc in repository.Get<SessionLog>()
-					.Where(x => x.Type == SessionLog.Reason.CONNECTED)
+					.Where(x => x.Type == SessionLog.SessionType.CONNECTED)
 				from sd in repository.Get<SessionLog>()
-					.Where(x => x.PlayerId == sc.PlayerId && x.Type == SessionLog.Reason.DISCONNECTED && x.Date >= sc.Date)
+					.Where(x => x.PlayerId == sc.PlayerId && x.Type == SessionLog.SessionType.DISCONNECTED && x.Date >= sc.Date)
 					.OrderBy(x => x.Date)
 					.Take(1)
 				select new
