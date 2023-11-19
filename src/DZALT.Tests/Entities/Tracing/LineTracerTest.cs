@@ -178,5 +178,61 @@ namespace DZALT.Tests.Entities.Tracing
 			eventLog.Weapon.Should().BeNull();
 			eventLog.Distance.Should().BeNull();
 		}
+
+		[Fact]
+		public async Task ShouldAddEventForUnconscious()
+		{
+			await tracer.Trace(
+				@"10:11:12 | Player ""aaa"" (id=aaa= pos=<11486.2, 14481.9, 58.1>) is unconscious",
+				CancellationToken.None);
+			await SubmitChanges();
+
+			var player = await Get<Player>().SingleOrDefaultAsync();
+			var eventLog = await Get<EventLog>().SingleOrDefaultAsync();
+
+			player.Should().NotBeNull();
+			eventLog.Should().NotBeNull();
+			eventLog.PlayerId.Should().Be(player.Id);
+			eventLog.Date.Should().Be(new DateTime(1, 1, 1, 10, 11, 12));
+			eventLog.X.Should().Be(11486.2M);
+			eventLog.Y.Should().Be(14481.9M);
+			eventLog.Z.Should().Be(58.1M);
+			eventLog.Event.Should().Be(EventLog.EventType.UNCONSCIOUS);
+			eventLog.Damage.Should().BeNull();
+			eventLog.Health.Should().BeNull();
+			eventLog.Enemy.Should().BeNull();
+			eventLog.BodyPart.Should().BeNull();
+			eventLog.Hitter.Should().BeNull();
+			eventLog.Weapon.Should().BeNull();
+			eventLog.Distance.Should().BeNull();
+		}
+
+		[Fact]
+		public async Task ShouldAddEventForRegainedConsciousness()
+		{
+			await tracer.Trace(
+				@"10:11:12 | Player ""aaa"" (id=aaa= pos=<10502.7, 6068.5, 261.8>) regained consciousness",
+				CancellationToken.None);
+			await SubmitChanges();
+
+			var player = await Get<Player>().SingleOrDefaultAsync();
+			var eventLog = await Get<EventLog>().SingleOrDefaultAsync();
+
+			player.Should().NotBeNull();
+			eventLog.Should().NotBeNull();
+			eventLog.PlayerId.Should().Be(player.Id);
+			eventLog.Date.Should().Be(new DateTime(1, 1, 1, 10, 11, 12));
+			eventLog.X.Should().Be(10502.7M);
+			eventLog.Y.Should().Be(6068.5M);
+			eventLog.Z.Should().Be(261.8M);
+			eventLog.Event.Should().Be(EventLog.EventType.CONSCIOUS);
+			eventLog.Damage.Should().BeNull();
+			eventLog.Health.Should().BeNull();
+			eventLog.Enemy.Should().BeNull();
+			eventLog.BodyPart.Should().BeNull();
+			eventLog.Hitter.Should().BeNull();
+			eventLog.Weapon.Should().BeNull();
+			eventLog.Distance.Should().BeNull();
+		}
 	}
 }

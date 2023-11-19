@@ -1,6 +1,5 @@
 ﻿using System;
 using System.Collections.Generic;
-using System.IO;
 using System.Linq;
 using System.Text.RegularExpressions;
 using System.Threading;
@@ -22,6 +21,10 @@ namespace DZALT.Entities.Tracing
 			@"^(?<time>.*?) \| Player ""(?<nickname>.*?)"" is connected \(id=(?<guid>.*?)\)$");
 		private static readonly Regex PlayerDisconnectedExp = new Regex(
 			@"^(?<time>.*?) \| Player ""(?<nickname>.*?)""\(id=(?<guid>.*?)\) has been disconnected$");
+		private static readonly Regex PlayerUnconsciousExp = new Regex(
+			@"^(?<time>.*?) \| Player ""(?<nickname>.*?)"" \(id=(?<guid>.*?) pos=<(?<x>.*?), (?<y>.*?), (?<z>.*?)>\) is unconscious$");
+		private static readonly Regex PlayerConsciousExp = new Regex(
+			@"^(?<time>.*?) \| Player ""(?<nickname>.*?)"" \(id=(?<guid>.*?) pos=<(?<x>.*?), (?<y>.*?), (?<z>.*?)>\) regained consciousness$");
 		private static readonly Regex PlayerHitExp = new Regex(
 			@"^(?<time>.*?) \| Player ""(?<nickname>.*?)"" \(id=(?<guid>.*?) pos=<(?<x>.*?), (?<y>.*?), (?<z>.*?)>\)\[HP: (?<health>.*?)\] hit by (?<enemy>.*?) into (?<bodypart>.*?) for (?<damage>.*?) damage \((?<hitter>.*?)\)( with (?<weapon>.*?) from (?<distance>.*?) meters)?$");
 		private static readonly Regex PlayerExp = new Regex(
@@ -50,7 +53,7 @@ namespace DZALT.Entities.Tracing
 			match = PlayerHitExp.Match(log);
 			if (match.Success)
 			{
-				return await GetEventLog(match, cancellationToken);
+				return await GetEventLogForHit(match, cancellationToken);
 			}
 
 			match = PlayerConnectedExp.Match(log);
@@ -63,6 +66,18 @@ namespace DZALT.Entities.Tracing
 			if (match.Success)
 			{
 				return await GetSessionEnd(match, cancellationToken);
+			}
+
+			match = PlayerUnconsciousExp.Match(log);
+			if (match.Success)
+			{
+				return await GetEventForConsciousness(match, EventLog.EventType.UNCONSCIOUS, cancellationToken);
+			}
+
+			match = PlayerConsciousExp.Match(log);
+			if (match.Success)
+			{
+				return await GetEventForConsciousness(match, EventLog.EventType.CONSCIOUS, cancellationToken);
 			}
 
 			throw new ApplicationException($"Could not trace log: {log}");
@@ -177,7 +192,36 @@ namespace DZALT.Entities.Tracing
 			return sessionLog;
 		}
 
-		private async Task<EventLog> GetEventLog(Match match, CancellationToken cancellationToken)
+		private async Task<EventLog> GetEventForConsciousness(Match match, EventLog.EventType @event, CancellationToken cancellationToken)
+		{
+			string time = match.Groups["time"].Value;
+			string guid = match.Groups["guid"].Value;
+			string x = match.Groups["x"].Value;
+			string y = match.Groups["y"].Value;
+			string z = match.Groups["z"].Value;
+
+			var player = await GetPlayer(guid, cancellationToken);
+			if (player == null)
+			{
+				return null;
+			}
+
+			var eventLog = new EventLog()
+			{
+				Player = player,
+				Date = new DateTime(0) + TimeOnly.Parse(time).ToTimeSpan(),
+				X = decimal.TryParse(x, out var xValue) ? xValue : 0,
+				Y = decimal.TryParse(y, out var yValue) ? yValue : 0,
+				Z = decimal.TryParse(z, out var zValue) ? zValue : 0,
+				Event = @event,
+			};
+
+			repository.Add(eventLog);
+
+			return eventLog;
+		}
+
+		private async Task<EventLog> GetEventLogForHit(Match match, CancellationToken cancellationToken)
 		{
 			string time = match.Groups["time"].Value;
 			string guid = match.Groups["guid"].Value;
