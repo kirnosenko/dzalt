@@ -180,6 +180,130 @@ namespace DZALT.Tests.Entities.Tracing
 		}
 
 		[Fact]
+		public async Task ShouldAddEventForKillByPlayerWithMelee()
+		{
+			await tracer.Trace(
+				@"10:11:12 | Player ""aaa"" (DEAD) (id=aaa= pos=<13387.1, 6314.0, 6.6>) killed by Player ""bbb"" (id=bbb= pos=<13386.9, 6316.0, 6.6>) with Hunting knife",
+				CancellationToken.None);
+			await SubmitChanges();
+
+			var player = await Get<Player>().SingleOrDefaultAsync(x => x.Guid == "aaa=");
+			var enemy = await Get<Player>().SingleOrDefaultAsync(x => x.Guid == "bbb=");
+			var eventLog = await Get<EventLog>().SingleOrDefaultAsync();
+
+			player.Should().NotBeNull();
+			enemy.Should().NotBeNull();
+			eventLog.Should().NotBeNull();
+			eventLog.PlayerId.Should().Be(player.Id);
+			eventLog.Date.Should().Be(new DateTime(1, 1, 1, 10, 11, 12));
+			eventLog.X.Should().Be(13387.1M);
+			eventLog.Y.Should().Be(6314.0M);
+			eventLog.Z.Should().Be(6.6M);
+			eventLog.Event.Should().Be(EventLog.EventType.MURDER);
+			eventLog.EnemyPlayerId.Should().Be(enemy.Id);
+			eventLog.EnemyPlayerX.Should().Be(13386.9M);
+			eventLog.EnemyPlayerY.Should().Be(6316.0M);
+			eventLog.EnemyPlayerZ.Should().Be(6.6M);
+			eventLog.Damage.Should().BeNull();
+			eventLog.Health.Should().BeNull();
+			eventLog.Enemy.Should().BeNull();
+			eventLog.BodyPart.Should().BeNull();
+			eventLog.Hitter.Should().BeNull();
+			eventLog.Weapon.Should().Be("Hunting knife");
+			eventLog.Distance.Should().BeNull();
+		}
+
+		[Fact]
+		public async Task ShouldAddEventForKillByPlayerWithGun()
+		{
+			await tracer.Trace(
+				@"10:11:12 | Player ""aaa"" (DEAD) (id=aaa= pos=<10011, 5461.9, 253.6>) killed by Player ""bbb"" (id=bbb= pos=<10013.6, 5466.6, 253.6>) with CR-61 Skorpion from 5.43375 meters",
+				CancellationToken.None);
+			await SubmitChanges();
+
+			var player = await Get<Player>().SingleOrDefaultAsync(x => x.Guid == "aaa=");
+			var enemy = await Get<Player>().SingleOrDefaultAsync(x => x.Guid == "bbb=");
+			var eventLog = await Get<EventLog>().SingleOrDefaultAsync();
+
+			player.Should().NotBeNull();
+			enemy.Should().NotBeNull();
+			eventLog.Should().NotBeNull();
+			eventLog.PlayerId.Should().Be(player.Id);
+			eventLog.Date.Should().Be(new DateTime(1, 1, 1, 10, 11, 12));
+			eventLog.X.Should().Be(10011M);
+			eventLog.Y.Should().Be(5461.9M);
+			eventLog.Z.Should().Be(253.6M);
+			eventLog.Event.Should().Be(EventLog.EventType.MURDER);
+			eventLog.EnemyPlayerId.Should().Be(enemy.Id);
+			eventLog.EnemyPlayerX.Should().Be(10013.6M);
+			eventLog.EnemyPlayerY.Should().Be(5466.6M);
+			eventLog.EnemyPlayerZ.Should().Be(253.6M);
+			eventLog.Damage.Should().BeNull();
+			eventLog.Health.Should().BeNull();
+			eventLog.Enemy.Should().BeNull();
+			eventLog.BodyPart.Should().BeNull();
+			eventLog.Hitter.Should().BeNull();
+			eventLog.Weapon.Should().Be("CR-61 Skorpion");
+			eventLog.Distance.Should().Be(5.43375M);
+		}
+
+		[Fact]
+		public async Task ShouldAddEventForKillByZombie()
+		{
+			await tracer.Trace(
+				@"10:11:12 | Player ""aaa"" (DEAD) (id=aaa= pos=<5188.9, 2170.9, 8.9>) killed by ZmbM_PatrolNormal_Autumn",
+				CancellationToken.None);
+			await SubmitChanges();
+
+			var player = await Get<Player>().SingleOrDefaultAsync();
+			var eventLog = await Get<EventLog>().SingleOrDefaultAsync();
+
+			player.Should().NotBeNull();
+			eventLog.Should().NotBeNull();
+			eventLog.PlayerId.Should().Be(player.Id);
+			eventLog.Date.Should().Be(new DateTime(1, 1, 1, 10, 11, 12));
+			eventLog.X.Should().Be(5188.9M);
+			eventLog.Y.Should().Be(2170.9M);
+			eventLog.Z.Should().Be(8.9M);
+			eventLog.Event.Should().Be(EventLog.EventType.ACCIDENT);
+			eventLog.Damage.Should().BeNull();
+			eventLog.Health.Should().BeNull();
+			eventLog.Enemy.Should().Be("ZmbM_PatrolNormal_Autumn");
+			eventLog.BodyPart.Should().BeNull();
+			eventLog.Hitter.Should().BeNull();
+			eventLog.Weapon.Should().BeNull();
+			eventLog.Distance.Should().BeNull();
+		}
+
+		[Fact]
+		public async Task ShouldAddEventForHitWhenPlayerDead()
+		{
+			await tracer.Trace(
+				@"10:11:12 | Player ""aaa"" (DEAD) (id=aaa= pos=<5188.9, 2170.9, 8.9>)[HP: 0] hit by Infected into LeftLeg(8) for 7.225 damage (MeleeSoldierInfected)",
+				CancellationToken.None);
+			await SubmitChanges();
+
+			var player = await Get<Player>().SingleOrDefaultAsync();
+			var eventLog = await Get<EventLog>().SingleOrDefaultAsync();
+
+			player.Should().NotBeNull();
+			eventLog.Should().NotBeNull();
+			eventLog.PlayerId.Should().Be(player.Id);
+			eventLog.Date.Should().Be(new DateTime(1, 1, 1, 10, 11, 12));
+			eventLog.X.Should().Be(5188.9M);
+			eventLog.Y.Should().Be(2170.9M);
+			eventLog.Z.Should().Be(8.9M);
+			eventLog.Event.Should().Be(EventLog.EventType.HIT);
+			eventLog.Damage.Should().Be(7.225M);
+			eventLog.Health.Should().Be(0);
+			eventLog.Enemy.Should().Be("Infected");
+			eventLog.BodyPart.Should().Be("LeftLeg(8)");
+			eventLog.Hitter.Should().Be("MeleeSoldierInfected");
+			eventLog.Weapon.Should().BeNull();
+			eventLog.Distance.Should().BeNull();
+		}
+
+		[Fact]
 		public async Task ShouldAddEventForUnconscious()
 		{
 			await tracer.Trace(

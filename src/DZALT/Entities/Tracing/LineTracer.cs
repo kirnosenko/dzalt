@@ -5,6 +5,7 @@ using System.Text.RegularExpressions;
 using System.Threading;
 using System.Threading.Tasks;
 using Microsoft.EntityFrameworkCore;
+using Microsoft.Extensions.Logging;
 
 namespace DZALT.Entities.Tracing
 {
@@ -26,7 +27,7 @@ namespace DZALT.Entities.Tracing
 		private static readonly Regex PlayerConsciousExp = new Regex(
 			@"^(?<time>.*?) \| Player ""(?<nickname>.*?)"" \(id=(?<guid>.*?) pos=<(?<x>.*?), (?<y>.*?), (?<z>.*?)>\) regained consciousness$");
 		private static readonly Regex PlayerHitExp = new Regex(
-			@"^(?<time>.*?) \| Player ""(?<nickname>.*?)"" \(id=(?<guid>.*?) pos=<(?<x>.*?), (?<y>.*?), (?<z>.*?)>\)\[HP: (?<health>.*?)\] hit by (?<enemy>.*?) into (?<bodypart>.*?) for (?<damage>.*?) damage \((?<hitter>.*?)\)( with (?<weapon>.*?) from (?<distance>.*?) meters)?$");
+			@"^(?<time>.*?) \| Player ""(?<nickname>.*?)"" (\(DEAD\) )?\(id=(?<guid>.*?) pos=<(?<x>.*?), (?<y>.*?), (?<z>.*?)>\)(\[HP: (?<health>.*?)\])? (?<action>(hit|killed)) by (?<enemy>.*?)( into (?<bodypart>.*?) for (?<damage>.*?) damage \((?<hitter>.*?)\))?( with (?<weapon>.*?) from (?<distance>.*?) meters)?$");
 		private static readonly Regex PlayerExp = new Regex(
 			@"^Player ""(?<nickname>.*?)"" \(id=(?<guid>.*?) pos=<(?<x>.*?), (?<y>.*?), (?<z>.*?)>\)$");
 
@@ -230,6 +231,7 @@ namespace DZALT.Entities.Tracing
 			string z = match.Groups["z"].Value;
 			string damage = match.Groups["damage"].Value;
 			string health = match.Groups["health"].Value;
+			string action = match.Groups["action"].Value;
 			string enemy = match.Groups["enemy"].Value;
 			string bodypart = match.Groups["bodypart"].Value;
 			string hitter = match.Groups["hitter"].Value;
@@ -247,11 +249,10 @@ namespace DZALT.Entities.Tracing
 				X = decimal.TryParse(x, out var xValue) ? xValue : 0,
 				Y = decimal.TryParse(y, out var yValue) ? yValue : 0,
 				Z = decimal.TryParse(z, out var zValue) ? zValue : 0,
-				Event = EventLog.EventType.HIT,
 				Damage = decimal.TryParse(damage, out var damageValue) ? damageValue : null,
 				Health = decimal.TryParse(health, out var healthValue) ? healthValue : null,
-				BodyPart = bodypart,
-				Hitter = hitter,
+				BodyPart = bodypart != string.Empty ? bodypart : null,
+				Hitter = hitter != string.Empty ? hitter : null,
 			};
 
 			var enemyMatch = PlayerExp.Match(enemy);
@@ -269,11 +270,13 @@ namespace DZALT.Entities.Tracing
 				eventLog.EnemyPlayerX = decimal.TryParse(enemyX, out var enemyXValue) ? enemyXValue : 0;
 				eventLog.EnemyPlayerY = decimal.TryParse(enemyY, out var enemyYValue) ? enemyYValue : 0;
 				eventLog.EnemyPlayerZ = decimal.TryParse(enemyZ, out var enemyZValue) ? enemyZValue : 0;
-				eventLog.Weapon = weapon;
+				eventLog.Event = action == "hit" ? EventLog.EventType.HIT : EventLog.EventType.MURDER;
+				eventLog.Weapon = weapon != string.Empty ? weapon : null;
 				eventLog.Distance = decimal.TryParse(distance, out var distanceValue) ? distanceValue : null;
 			}
 			else
 			{
+				eventLog.Event = action == "hit" ? EventLog.EventType.HIT : EventLog.EventType.ACCIDENT;
 				eventLog.Enemy = enemy;
 			}
 			
