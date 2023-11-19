@@ -20,6 +20,7 @@ namespace DZALT.Entities.Mapping
 			builder.HasIndex(x => x.Date);
 
 			builder.Property(x => x.Type);
+			builder.HasIndex(x => x.Type);
 		}
 	}
 }

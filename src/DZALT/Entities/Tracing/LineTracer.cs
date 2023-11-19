@@ -21,6 +21,10 @@ namespace DZALT.Entities.Tracing
 			@"^(?<time>.*?) \| Player ""(?<nickname>.*?)"" is connected \(id=(?<guid>.*?)\)$");
 		private static readonly Regex PlayerDisconnectedExp = new Regex(
 			@"^(?<time>.*?) \| Player ""(?<nickname>.*?)""\(id=(?<guid>.*?)\) has been disconnected$");
+		private static readonly Regex PlayerHitExp = new Regex(
+			@"^(?<time>.*?) \| Player ""(?<nickname>.*?)"" \(id=(?<guid>.*?) pos=<(?<x>.*?), (?<y>.*?), (?<z>.*?)>\)\[HP: (?<health>.*?)\] hit by (?<enemy>.*?) into (?<bodypart>.*?) for (?<damage>.*?) damage \((?<hitter>.*?)\)( with (?<weapon>.*?) from (?<distance>.*?) meters)?$");
+		private static readonly Regex PlayerExp = new Regex(
+			@"^Player ""(?<nickname>.*?)"" \(id=(?<guid>.*?) pos=<(?<x>.*?), (?<y>.*?), (?<z>.*?)>\)$");
 
 		private readonly IRepository repository;
         private readonly Dictionary<string, Player> players;
@@ -35,7 +39,15 @@ namespace DZALT.Entities.Tracing
 
         public async Task<Log> Trace(string log, CancellationToken cancellationToken)
         {
-            var match = PlayerConnectedExp.Match(log);
+			Match match = null;
+
+			match = PlayerHitExp.Match(log);
+			if (match.Success)
+			{
+				return await GetEventLog(match, cancellationToken);
+			}
+
+			match = PlayerConnectedExp.Match(log);
             if (match.Success)
             {
 				string time = match.Groups["time"].Value;
@@ -161,6 +173,67 @@ namespace DZALT.Entities.Tracing
 			repository.Add(sessionLog);
 
 			return sessionLog;
+		}
+
+		private async Task<EventLog> GetEventLog(Match match, CancellationToken cancellationToken)
+		{
+			string time = match.Groups["time"].Value;
+			string guid = match.Groups["guid"].Value;
+			string x = match.Groups["x"].Value;
+			string y = match.Groups["y"].Value;
+			string z = match.Groups["z"].Value;
+			string damage = match.Groups["damage"].Value;
+			string health = match.Groups["health"].Value;
+			string enemy = match.Groups["enemy"].Value;
+			string bodypart = match.Groups["bodypart"].Value;
+			string hitter = match.Groups["hitter"].Value;
+
+			var player = await GetPlayer(guid, cancellationToken);
+			if (player == null)
+			{
+				return null;
+			}
+
+			var eventLog = new EventLog()
+			{
+				Player = player,
+				Date = new DateTime(0) + TimeOnly.Parse(time).ToTimeSpan(),
+				X = decimal.TryParse(x, out var xValue) ? xValue : 0,
+				Y = decimal.TryParse(y, out var yValue) ? yValue : 0,
+				Z = decimal.TryParse(z, out var zValue) ? zValue : 0,
+				Event = EventLog.EventType.HIT,
+				Damage = decimal.TryParse(damage, out var damageValue) ? damageValue : null,
+				Health = decimal.TryParse(health, out var healthValue) ? healthValue : null,
+				BodyPart = bodypart,
+				Hitter = hitter,
+			};
+
+			var enemyMatch = PlayerExp.Match(enemy);
+			if (enemyMatch.Success)
+			{
+				string enemyGuid = enemyMatch.Groups["guid"].Value;
+				string enemyX = enemyMatch.Groups["x"].Value;
+				string enemyY = enemyMatch.Groups["y"].Value;
+				string enemyZ = enemyMatch.Groups["z"].Value;
+				string weapon = match.Groups["weapon"].Value;
+				string distance = match.Groups["distance"].Value;
+
+				var enemyPlayer = await GetPlayer(enemyGuid, cancellationToken);
+				eventLog.EnemyPlayer = enemyPlayer;
+				eventLog.EnemyPlayerX = decimal.TryParse(enemyX, out var enemyXValue) ? enemyXValue : 0;
+				eventLog.EnemyPlayerY = decimal.TryParse(enemyY, out var enemyYValue) ? enemyYValue : 0;
+				eventLog.EnemyPlayerZ = decimal.TryParse(enemyZ, out var enemyZValue) ? enemyZValue : 0;
+				eventLog.Weapon = weapon;
+				eventLog.Distance = decimal.TryParse(distance, out var distanceValue) ? distanceValue : null;
+			}
+			else
+			{
+				eventLog.Enemy = enemy;
+			}
+			
+			repository.Add(eventLog);
+
+			return eventLog;
 		}
 	}
 }

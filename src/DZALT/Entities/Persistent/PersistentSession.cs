@@ -73,6 +73,7 @@ namespace DZALT.Entities.Persistent
 			modelBuilder.ApplyConfiguration(new PlayerMapping());
 			modelBuilder.ApplyConfiguration(new NicknameMapping());
 			modelBuilder.ApplyConfiguration(new SessionLogMapping());
+			modelBuilder.ApplyConfiguration(new EventLogMapping());
 		}
 	}
 }

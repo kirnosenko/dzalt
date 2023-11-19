@@ -6,7 +6,6 @@ using DZALT.Entities;
 using DZALT.Entities.Tracing;
 using FluentAssertions;
 using Microsoft.EntityFrameworkCore;
-using NSubstitute;
 using Xunit;
 
 namespace DZALT.Tests.Entities.Tracing
@@ -116,6 +115,68 @@ namespace DZALT.Tests.Entities.Tracing
 				new DateTime(1, 1, 1, 12, 23, 46),
 				new DateTime(1, 1, 1, 13, 23, 45),
 			});
+		}
+
+		[Fact]
+		public async Task ShouldAddEventForHitByPlayer()
+		{
+			await tracer.Trace(
+				@"10:11:12 | Player ""aaa"" (id=aaa= pos=<10011, 5461.9, 253.6>)[HP: 2.89747] hit by Player ""bbb"" (id=bbb= pos=<10013.7, 5466.8, 253.6>) into Head(0) for 8.68342 damage (Bullet_380) with CR-61 Skorpion from 5.64337 meters",
+				CancellationToken.None);
+			await SubmitChanges();
+
+			var player = await Get<Player>().SingleOrDefaultAsync(x => x.Guid == "aaa=");
+			var enemy = await Get<Player>().SingleOrDefaultAsync(x => x.Guid == "bbb=");
+			var eventLog = await Get<EventLog>().SingleOrDefaultAsync();
+
+			player.Should().NotBeNull();
+			enemy.Should().NotBeNull();
+			eventLog.Should().NotBeNull();
+			eventLog.PlayerId.Should().Be(player.Id);
+			eventLog.Date.Should().Be(new DateTime(1, 1, 1, 10, 11, 12));
+			eventLog.X.Should().Be(10011);
+			eventLog.Y.Should().Be(5461.9M);
+			eventLog.Z.Should().Be(253.6M);
+			eventLog.Event.Should().Be(EventLog.EventType.HIT);
+			eventLog.EnemyPlayerId.Should().Be(enemy.Id);
+			eventLog.EnemyPlayerX.Should().Be(10013.7M);
+			eventLog.EnemyPlayerY.Should().Be(5466.8M);
+			eventLog.EnemyPlayerZ.Should().Be(253.6M);
+			eventLog.Damage.Should().Be(8.68342M);
+			eventLog.Health.Should().Be(2.89747M);
+			eventLog.Enemy.Should().BeNull();
+			eventLog.BodyPart.Should().Be("Head(0)");
+			eventLog.Hitter.Should().Be("Bullet_380");
+			eventLog.Weapon.Should().Be("CR-61 Skorpion");
+			eventLog.Distance.Should().Be(5.64337M);
+		}
+
+		[Fact]
+		public async Task ShouldAddEventForHitByZombie()
+		{
+			await tracer.Trace(
+				@"10:11:12 | Player ""abc"" (id=abc= pos=<14290, 13280.9, 3.3>)[HP: 93.5] hit by Infected into Torso(1) for 6.5 damage (MeleeInfected)",
+				CancellationToken.None);
+			await SubmitChanges();
+
+			var player = await Get<Player>().SingleOrDefaultAsync();
+			var eventLog = await Get<EventLog>().SingleOrDefaultAsync();
+
+			player.Should().NotBeNull();
+			eventLog.Should().NotBeNull();
+			eventLog.PlayerId.Should().Be(player.Id);
+			eventLog.Date.Should().Be(new DateTime(1, 1, 1, 10, 11, 12));
+			eventLog.X.Should().Be(14290);
+			eventLog.Y.Should().Be(13280.9M);
+			eventLog.Z.Should().Be(3.3M);
+			eventLog.Event.Should().Be(EventLog.EventType.HIT);
+			eventLog.Damage.Should().Be(6.5M);
+			eventLog.Health.Should().Be(93.5M);
+			eventLog.Enemy.Should().Be("Infected");
+			eventLog.BodyPart.Should().Be("Torso(1)");
+			eventLog.Hitter.Should().Be("MeleeInfected");
+			eventLog.Weapon.Should().BeNull();
+			eventLog.Distance.Should().BeNull();
 		}
 	}
 }
