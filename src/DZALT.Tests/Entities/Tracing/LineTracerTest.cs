@@ -386,5 +386,83 @@ namespace DZALT.Tests.Entities.Tracing
 			eventLog.Weapon.Should().BeNull();
 			eventLog.Distance.Should().BeNull();
 		}
+
+		[Fact]
+		public async Task ShouldNotAddEventForBledOut()
+		{
+			var log = await tracer.Trace(
+				@"10:11:12 | Player ""aaa"" (DEAD) (id=aaa= pos=<11486.1, 14482.8, 58.1>) bled out",
+				CancellationToken.None);
+
+			log.Should().BeNull();
+		}
+
+		[Fact]
+		public async Task ShouldAddSuicideEvent()
+		{
+			var log1 = await tracer.Trace(
+				@"10:11:12 | Player ""aaa"" (DEAD) (id=aaa= pos=<11492.3, 5503.6, 243.2>) died. Stats> Water: 848.615 Energy: 0 Bleed sources: 3",
+				CancellationToken.None);
+			var log2 = await tracer.Trace(
+				@"10:11:12 | Player 'aaa' (id=aaa=) committed suicide.",
+				CancellationToken.None);
+			await SubmitChanges();
+
+			var player = await Get<Player>().SingleOrDefaultAsync();
+			var eventLog = await Get<EventLog>().SingleOrDefaultAsync();
+
+			log1.Should().NotBeNull();
+			log2.Should().BeNull();
+			player.Should().NotBeNull();
+			eventLog.Should().NotBeNull();
+			eventLog.Id.Should().Be(log1.Id);
+			eventLog.PlayerId.Should().Be(player.Id);
+			eventLog.Date.Should().Be(new DateTime(1, 1, 1, 10, 11, 12));
+			eventLog.X.Should().Be(11492.3M);
+			eventLog.Y.Should().Be(5503.6M);
+			eventLog.Z.Should().Be(243.2M);
+			eventLog.Event.Should().Be(EventLog.EventType.SUICIDE);
+			eventLog.Damage.Should().BeNull();
+			eventLog.Health.Should().BeNull();
+			eventLog.Enemy.Should().BeNull();
+			eventLog.BodyPart.Should().BeNull();
+			eventLog.Hitter.Should().BeNull();
+			eventLog.Weapon.Should().BeNull();
+			eventLog.Distance.Should().BeNull();
+		}
+
+		[Fact]
+		public async Task ShouldAddSuicideEventInCaseOfAnotherLogOrder()
+		{
+			var log1 = await tracer.Trace(
+				@"10:11:12 | Player ""aaa"" (id=aaa= pos=<10403.6, 6016.9, 281.1>) committed suicide",
+				CancellationToken.None);
+			var log2 = await tracer.Trace(
+				@"10:11:12 | Player ""aaa"" (DEAD) (id=aaa= pos=<10403.6, 6016.9, 281.1>) died. Stats> Water: 757.533 Energy: 331.154 Bleed sources: 0",
+				CancellationToken.None);
+			await SubmitChanges();
+
+			var player = await Get<Player>().SingleOrDefaultAsync();
+			var eventLog = await Get<EventLog>().SingleOrDefaultAsync();
+
+			log1.Should().NotBeNull();
+			log2.Should().BeNull();
+			player.Should().NotBeNull();
+			eventLog.Should().NotBeNull();
+			eventLog.Id.Should().Be(log1.Id);
+			eventLog.PlayerId.Should().Be(player.Id);
+			eventLog.Date.Should().Be(new DateTime(1, 1, 1, 10, 11, 12));
+			eventLog.X.Should().Be(10403.6M);
+			eventLog.Y.Should().Be(6016.9M);
+			eventLog.Z.Should().Be(281.1M);
+			eventLog.Event.Should().Be(EventLog.EventType.SUICIDE);
+			eventLog.Damage.Should().BeNull();
+			eventLog.Health.Should().BeNull();
+			eventLog.Enemy.Should().BeNull();
+			eventLog.BodyPart.Should().BeNull();
+			eventLog.Hitter.Should().BeNull();
+			eventLog.Weapon.Should().BeNull();
+			eventLog.Distance.Should().BeNull();
+		}
 	}
 }

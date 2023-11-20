@@ -27,24 +27,43 @@ namespace DZALT.Entities.Tracing
 			@"^(?<time>.*?) \| Player ""(?<nickname>.*?)"" \(id=(?<guid>.*?) pos=<(?<x>.*?), (?<y>.*?), (?<z>.*?)>\) regained consciousness$");
 		private static readonly Regex PlayerDeadExp = new Regex(
 			@"^(?<time>.*?) \| Player ""(?<nickname>.*?)"" (\(DEAD\) )?\(id=(?<guid>.*?) pos=<(?<x>.*?), (?<y>.*?), (?<z>.*?)>\) died. Stats> (?<stats>.*?)$");
+		private static readonly Regex PlayerBledOutExp = new Regex(
+			@"^(?<time>.*?) \| Player ""(?<nickname>.*?)"" (\(DEAD\) )?\(id=(?<guid>.*?) pos=<(?<x>.*?), (?<y>.*?), (?<z>.*?)>\) bled out$");
+		private static readonly Regex PlayerSuicideExp = new Regex(
+			@"^(?<time>.*?) \| Player '(?<nickname>.*?)' \(id=(?<guid>.*?)\) committed suicide.$");
+		private static readonly Regex PlayerSuicideExp2 = new Regex(
+			@"^(?<time>.*?) \| Player ""(?<nickname>.*?)"" \(id=(?<guid>.*?) pos=<(?<x>.*?), (?<y>.*?), (?<z>.*?)>\) committed suicide$");
 		private static readonly Regex PlayerHitExp = new Regex(
 			@"^(?<time>.*?) \| Player ""(?<nickname>.*?)"" (\(DEAD\) )?\(id=(?<guid>.*?) pos=<(?<x>.*?), (?<y>.*?), (?<z>.*?)>\)(\[HP: (?<health>.*?)\])? (?<action>(hit|killed)) by (?<enemy>.*?)( into (?<bodypart>.*?) for (?<damage>.*?) damage \((?<hitter>.*?)\))?( with (?<weapon>.*?)( from (?<distance>.*?) meters)?)?$");
 		private static readonly Regex PlayerExp = new Regex(
 			@"^Player ""(?<nickname>.*?)"" \(id=(?<guid>.*?) pos=<(?<x>.*?), (?<y>.*?), (?<z>.*?)>\)$");
 
 		private readonly IRepository repository;
-        private readonly Dictionary<string, Player> players;
-        private readonly Dictionary<string, Nickname> nicknames;
-        
-        public LineTracer(IRepository repository)
-        {
-            this.repository = repository;
-            players = new Dictionary<string, Player>();
-            nicknames = new Dictionary<string, Nickname>();
-        }
+		private readonly Dictionary<string, Player> players;
+		private readonly Dictionary<string, Nickname> nicknames;
+		private readonly Queue<Log> logs;
 
-        public async Task<Log> Trace(string log, CancellationToken cancellationToken)
-        {
+		public LineTracer(IRepository repository)
+		{
+			this.repository = repository;
+			players = new Dictionary<string, Player>();
+			nicknames = new Dictionary<string, Nickname>();
+			logs = new Queue<Log>();
+		}
+
+		public async Task<Log> Trace(string log, CancellationToken cancellationToken)
+		{
+			var result = await TraceInner(log, cancellationToken);
+			if (result != null)
+			{
+				logs.Enqueue(result);
+			}
+
+			return result;
+		}
+
+		private async Task<Log> TraceInner(string log, CancellationToken cancellationToken)
+		{
 			if (!log.Contains("| Player"))
 			{
 				return null;
@@ -64,9 +83,21 @@ namespace DZALT.Entities.Tracing
 				return await GetEventLogForDead(match, cancellationToken);
 			}
 
+			match = PlayerSuicideExp.Match(log);
+			if (match.Success)
+			{
+				return await GetEventLogForSuicide(match, cancellationToken);
+			}
+
+			match = PlayerSuicideExp2.Match(log);
+			if (match.Success)
+			{
+				return await GetEventLogForSuicide(match, cancellationToken);
+			}
+
 			match = PlayerConnectedExp.Match(log);
-            if (match.Success)
-            {
+			if (match.Success)
+			{
 				return await GetSessionStart(match, cancellationToken);
 			}
 
@@ -88,10 +119,15 @@ namespace DZALT.Entities.Tracing
 				return await GetEventForConsciousness(match, EventLog.EventType.CONSCIOUS, cancellationToken);
 			}
 
+			if (PlayerBledOutExp.IsMatch(log))
+			{
+				return null;
+			}
+
 			throw new ApplicationException($"Could not trace log: {log}");
 		}
 
-        private async Task<Player> GetPlayer(
+		private async Task<Player> GetPlayer(
 			string guid,
 			CancellationToken cancellationToken)
         {
@@ -243,7 +279,17 @@ namespace DZALT.Entities.Tracing
 				return null;
 			}
 
-			var eventLog = new EventLog()
+			var logTime = TimeOnly.Parse(time);
+			var eventLog = FindLastEventLog(x =>
+				x.Player == player &&
+				x.Event == EventLog.EventType.SUICIDE);
+
+			if (eventLog != null && logTime == TimeOnly.FromDateTime(eventLog.Date))
+			{
+				return null;
+			}
+
+			eventLog = new EventLog()
 			{
 				Player = player,
 				Date = new DateTime(0) + TimeOnly.Parse(time).ToTimeSpan(),
@@ -254,7 +300,45 @@ namespace DZALT.Entities.Tracing
 			};
 
 			repository.Add(eventLog);
+			return eventLog;
+		}
 
+		private async Task<EventLog> GetEventLogForSuicide(Match match, CancellationToken cancellationToken)
+		{
+			string time = match.Groups["time"].Value;
+			string guid = match.Groups["guid"].Value;
+			string x = match.Groups["x"].Value;
+			string y = match.Groups["y"].Value;
+			string z = match.Groups["z"].Value;
+
+			var player = await GetPlayer(guid, cancellationToken);
+			if (player == null)
+			{
+				return null;
+			}
+
+			var logTime = TimeOnly.Parse(time);
+			var eventLog = FindLastEventLog(x =>
+				x.Player == player &&
+				x.Event == EventLog.EventType.ACCIDENT);
+
+			if (eventLog != null && logTime == TimeOnly.FromDateTime(eventLog.Date))
+			{
+				eventLog.Event = EventLog.EventType.SUICIDE;
+				return null;
+			}
+
+			eventLog = new EventLog()
+			{
+				Player = player,
+				Date = new DateTime(0) + logTime.ToTimeSpan(),
+				X = decimal.TryParse(x, out var xValue) ? xValue : 0,
+				Y = decimal.TryParse(y, out var yValue) ? yValue : 0,
+				Z = decimal.TryParse(z, out var zValue) ? zValue : 0,
+				Event = EventLog.EventType.SUICIDE,
+			};
+
+			repository.Add(eventLog);
 			return eventLog;
 		}
 
@@ -319,6 +403,17 @@ namespace DZALT.Entities.Tracing
 			repository.Add(eventLog);
 
 			return eventLog;
+		}
+
+		private EventLog FindLastEventLog(Func<EventLog, bool> filter)
+		{
+			var log = logs				
+				.Where(x => x is EventLog)
+				.Where(x => filter(x as EventLog))
+				.OrderByDescending(x => x.Date)
+				.FirstOrDefault();
+
+			return log as EventLog;
 		}
 	}
 }
