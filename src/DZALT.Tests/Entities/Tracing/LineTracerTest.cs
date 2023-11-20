@@ -358,5 +358,33 @@ namespace DZALT.Tests.Entities.Tracing
 			eventLog.Weapon.Should().BeNull();
 			eventLog.Distance.Should().BeNull();
 		}
+
+		[Fact]
+		public async Task ShouldAddEventForDeadStateWithStats()
+		{
+			await tracer.Trace(
+				@"10:11:12 | Player ""aaa"" (DEAD) (id=aaa= pos=<11492.3, 5503.6, 243.2>) died. Stats> Water: 848.615 Energy: 0 Bleed sources: 3",
+				CancellationToken.None);
+			await SubmitChanges();
+
+			var player = await Get<Player>().SingleOrDefaultAsync();
+			var eventLog = await Get<EventLog>().SingleOrDefaultAsync();
+
+			player.Should().NotBeNull();
+			eventLog.Should().NotBeNull();
+			eventLog.PlayerId.Should().Be(player.Id);
+			eventLog.Date.Should().Be(new DateTime(1, 1, 1, 10, 11, 12));
+			eventLog.X.Should().Be(11492.3M);
+			eventLog.Y.Should().Be(5503.6M);
+			eventLog.Z.Should().Be(243.2M);
+			eventLog.Event.Should().Be(EventLog.EventType.ACCIDENT);
+			eventLog.Damage.Should().BeNull();
+			eventLog.Health.Should().BeNull();
+			eventLog.Enemy.Should().BeNull();
+			eventLog.BodyPart.Should().BeNull();
+			eventLog.Hitter.Should().BeNull();
+			eventLog.Weapon.Should().BeNull();
+			eventLog.Distance.Should().BeNull();
+		}
 	}
 }

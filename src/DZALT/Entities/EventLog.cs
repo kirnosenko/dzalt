@@ -8,8 +8,8 @@
 			UNCONSCIOUS = 1,
 			CONSCIOUS = 2,
 			SUICIDE = 10,
-			MURDER = 11,
-			ACCIDENT = 12,
+			ACCIDENT = 11,
+			MURDER = 12,
 		}
 
 		public decimal X { get; set; }
