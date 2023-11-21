@@ -303,11 +303,13 @@ namespace DZALT.Tests.Entities.Tracing
 			eventLog.Distance.Should().BeNull();
 		}
 
-		[Fact]
-		public async Task ShouldAddEventForUnconscious()
+		[Theory]
+		[InlineData(@"10:11:12 | Player ""aaa"" (id=aaa= pos=<11486.2, 14481.9, 58.1>) is unconscious")]
+		[InlineData(@"10:11:12 | Player ""aaa"" (DEAD) (id=aaa= pos=<11486.2, 14481.9, 58.1>) is unconscious")]
+		public async Task ShouldAddEventForUnconscious(string log)
 		{
 			await tracer.Trace(
-				@"10:11:12 | Player ""aaa"" (id=aaa= pos=<11486.2, 14481.9, 58.1>) is unconscious",
+				log,
 				CancellationToken.None);
 			await SubmitChanges();
 
