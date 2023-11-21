@@ -34,7 +34,7 @@ namespace DZALT.Entities.Tracing
 		private static readonly Regex PlayerHitExp = new Regex(
 			@"^(?<time>.*?) \| Player ""(?<nickname>.*?)"" (\(DEAD\) )?\(id=(?<guid>.*?) pos=<(?<x>.*?), (?<y>.*?), (?<z>.*?)>\)(\[HP: (?<health>.*?)\])? (?<action>(hit|killed)) by (?<enemy>.*?)( into (?<bodypart>.*?) for (?<damage>.*?) damage \((?<hitter>.*?)\))?( with (?<weapon>.*?)( from (?<distance>.*?) meters)?)?$");
 		private static readonly Regex PlayerIgnoredExp = new Regex(
-			@"^(?<time>.*?) \| Player ""(?<nickname>.*?)"" (\(DEAD\) )?\(id=(?<guid>.*?) pos=<(?<x>.*?), (?<y>.*?), (?<z>.*?)>\) .*?$");
+			@"^(?<time>.*?) \| Player ""(?<nickname>.*?)""( )?(\(DEAD\) )?\(id=(?<guid>.*?)( pos=<(?<x>.*?), (?<y>.*?), (?<z>.*?)>)?\) .*?$");
 		private static readonly Regex PlayerExp = new Regex(
 			@"^Player ""(?<nickname>.*?)"" (\(DEAD\) )?\(id=(?<guid>.*?) pos=<(?<x>.*?), (?<y>.*?), (?<z>.*?)>\)$");
 
@@ -51,81 +51,80 @@ namespace DZALT.Entities.Tracing
 			logs = new Queue<Log>();
 		}
 
-		public async Task<Log> Trace(string log, CancellationToken cancellationToken)
+		public async Task<Log> Trace(string line, CancellationToken cancellationToken)
 		{
-			var result = await TraceInner(log, cancellationToken);
-			if (result != null)
+			Log log = null;
+
+			if (line.Contains("| Player"))
 			{
-				logs.Enqueue(result);
+				log = await TraceInner(line, cancellationToken);
+				if (log == null)
+				{
+					log = await IgnoreLog(line, cancellationToken);
+				}
+			}
+			
+			if (log != null)
+			{
+				logs.Enqueue(log);
 			}
 
-			return result;
+			return log;
 		}
 
-		private async Task<Log> TraceInner(string log, CancellationToken cancellationToken)
+		private async Task<Log> TraceInner(string line, CancellationToken cancellationToken)
 		{
-			if (!log.Contains("| Player"))
-			{
-				return null;
-			}
-
 			Match match = null;
 
-			match = PlayerHitExp.Match(log);
+			match = PlayerHitExp.Match(line);
 			if (match.Success)
 			{
 				return await GetEventLogForHit(match, cancellationToken);
 			}
 
-			match = PlayerDeadExp.Match(log);
+			match = PlayerDeadExp.Match(line);
 			if (match.Success)
 			{
 				return await GetEventLogForDead(match, cancellationToken);
 			}
 
-			match = PlayerSuicideExp.Match(log);
+			match = PlayerSuicideExp.Match(line);
 			if (match.Success)
 			{
 				return await GetEventLogForSuicide(match, cancellationToken);
 			}
 
-			match = PlayerSuicideExp2.Match(log);
+			match = PlayerSuicideExp2.Match(line);
 			if (match.Success)
 			{
 				return await GetEventLogForSuicide(match, cancellationToken);
 			}
 
-			match = PlayerConnectedExp.Match(log);
+			match = PlayerConnectedExp.Match(line);
 			if (match.Success)
 			{
 				return await GetSessionStart(match, cancellationToken);
 			}
 
-			match = PlayerDisconnectedExp.Match(log);
+			match = PlayerDisconnectedExp.Match(line);
 			if (match.Success)
 			{
 				return await GetSessionEnd(match, cancellationToken);
 			}
 
-			match = PlayerUnconsciousExp.Match(log);
+			match = PlayerUnconsciousExp.Match(line);
 			if (match.Success)
 			{
 				return await GetEventForConsciousness(match, EventLog.EventType.UNCONSCIOUS, cancellationToken);
 			}
 
-			match = PlayerConsciousExp.Match(log);
+			match = PlayerConsciousExp.Match(line);
 			if (match.Success)
 			{
 				return await GetEventForConsciousness(match, EventLog.EventType.CONSCIOUS, cancellationToken);
 			}
 
-			match = PlayerIgnoredExp.Match(log);
-			if (match.Success)
-			{
-				return await IgnoreLog(match, cancellationToken);
-			}
-
-			throw new ApplicationException($"Could not trace log: {log}");
+			return null;
 		}
 
 		private async Task<Player> GetPlayer(
@@ -193,7 +192,7 @@ namespace DZALT.Entities.Tracing
 			return nick;
 		}
 
-		private async Task<SessionLog> GetSessionStart(Match match, CancellationToken cancellationToken)
+		private async Task<Log> GetSessionStart(Match match, CancellationToken cancellationToken)
 		{
 			string time = match.Groups["time"].Value;
 			string nickname = match.Groups["nickname"].Value;
@@ -209,7 +208,7 @@ namespace DZALT.Entities.Tracing
 			return GetSession(player, time, SessionLog.SessionType.CONNECTED);
 		}
 
-		private async Task<SessionLog> GetSessionEnd(Match match, CancellationToken cancellationToken)
+		private async Task<Log> GetSessionEnd(Match match, CancellationToken cancellationToken)
 		{
 			string time = match.Groups["time"].Value;
 			string guid = match.Groups["guid"].Value;
@@ -223,7 +222,7 @@ namespace DZALT.Entities.Tracing
 			return GetSession(player, time, SessionLog.SessionType.DISCONNECTED);
 		}
 
-		private SessionLog GetSession(Player player, string time, SessionLog.SessionType type)
+		private Log GetSession(Player player, string time, SessionLog.SessionType type)
 		{
 			var sessionLog = new SessionLog()
 			{
@@ -237,7 +236,7 @@ namespace DZALT.Entities.Tracing
 			return sessionLog;
 		}
 
-		private async Task<EventLog> GetEventForConsciousness(Match match, EventLog.EventType @event, CancellationToken cancellationToken)
+		private async Task<Log> GetEventForConsciousness(Match match, EventLog.EventType @event, CancellationToken cancellationToken)
 		{
 			string time = match.Groups["time"].Value;
 			string guid = match.Groups["guid"].Value;
@@ -266,7 +265,7 @@ namespace DZALT.Entities.Tracing
 			return eventLog;
 		}
 
-		private async Task<EventLog> GetEventLogForDead(Match match, CancellationToken cancellationToken)
+		private async Task<Log> GetEventLogForDead(Match match, CancellationToken cancellationToken)
 		{
 			string time = match.Groups["time"].Value;
 			string guid = match.Groups["guid"].Value;
@@ -287,7 +286,7 @@ namespace DZALT.Entities.Tracing
 
 			if (eventLog != null && logTime == TimeOnly.FromDateTime(eventLog.Date))
 			{
-				return null;
+				return new IgnoredLog(); // not saved
 			}
 
 			eventLog = new EventLog()
@@ -314,7 +313,7 @@ namespace DZALT.Entities.Tracing
 			return eventLog;
 		}
 
-		private async Task<EventLog> GetEventLogForSuicide(Match match, CancellationToken cancellationToken)
+		private async Task<Log> GetEventLogForSuicide(Match match, CancellationToken cancellationToken)
 		{
 			string time = match.Groups["time"].Value;
 			string guid = match.Groups["guid"].Value;
@@ -336,7 +335,7 @@ namespace DZALT.Entities.Tracing
 			if (eventLog != null && logTime == TimeOnly.FromDateTime(eventLog.Date))
 			{
 				eventLog.Event = EventLog.EventType.SUICIDE;
-				return null;
+				return new IgnoredLog(); // not saved
 			}
 
 			eventLog = new EventLog()
@@ -353,7 +352,7 @@ namespace DZALT.Entities.Tracing
 			return eventLog;
 		}
 
-		private async Task<EventLog> GetEventLogForHit(Match match, CancellationToken cancellationToken)
+		private async Task<Log> GetEventLogForHit(Match match, CancellationToken cancellationToken)
 		{
 			string time = match.Groups["time"].Value;
 			string guid = match.Groups["guid"].Value;
@@ -416,23 +415,27 @@ namespace DZALT.Entities.Tracing
 			return eventLog;
 		}
 
-		private async Task<IgnoredLog> IgnoreLog(Match match, CancellationToken cancellationToken)
+		private async Task<Log> IgnoreLog(string line, CancellationToken cancellationToken)
 		{
-			string time = match.Groups["time"].Value;
-			string guid = match.Groups["guid"].Value;
-			
-			var player = await GetPlayer(guid, cancellationToken);
-			if (player == null)
-			{
-				return null;
-			}
-
 			var ignoredLog = new IgnoredLog()
 			{
-				Player = player,
-				Date = new DateTime(0) + TimeOnly.Parse(time).ToTimeSpan(),
-				Body = match.Groups[0].Value,
+				Body = line,
 			};
+
+			var match = PlayerIgnoredExp.Match(line);
+			if (match.Success)
+			{
+				string time = match.Groups["time"].Value;
+				string guid = match.Groups["guid"].Value;
+
+				var player = await GetPlayer(guid, cancellationToken);
+				if (player != null)
+				{
+					ignoredLog.Player = player;
+				}
+
+				ignoredLog.Date = new DateTime(0) + TimeOnly.Parse(time).ToTimeSpan();
+			}
 
 			repository.Add(ignoredLog);
 

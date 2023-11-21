@@ -14,7 +14,7 @@ namespace DZALT.Entities.Mapping
 			builder.HasOne(x => x.Player)
 				.WithMany((string)null)
 				.HasForeignKey(x => x.PlayerId)
-				.IsRequired();
+				.IsRequired(false);
 
 			builder.Property(x => x.Date);
 			builder.HasIndex(x => x.Date);

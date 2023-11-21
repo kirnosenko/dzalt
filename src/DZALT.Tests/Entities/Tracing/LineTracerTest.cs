@@ -63,7 +63,8 @@ namespace DZALT.Tests.Entities.Tracing
 				CancellationToken.None);
 			await SubmitChanges();
 
-			log.Should().BeNull();
+			log.Should().NotBeNull();
+			(log as IgnoredLog).Should().NotBeNull();
 			(await Get<Player>().SingleOrDefaultAsync()).Should().BeNull();
 		}
 
@@ -398,7 +399,7 @@ namespace DZALT.Tests.Entities.Tracing
 		public async Task ShouldReconsiderAnAccidentAsAMurderAfterHitByPlayer(int minutes, EventLog.EventType @event)
 		{
 			var log1 = await tracer.Trace(
-				$"10:{11-minutes}:12" + @" | Player ""aaa"" (id=aaa= pos=<10011, 5461.9, 253.6>)[HP: 2.89747] hit by Player ""bbb"" (id=bbb= pos=<10013.7, 5466.8, 253.6>) into Head(0) for 8.68342 damage (Bullet_380) with CR-61 Skorpion from 5.64337 meters",
+				$"10:{11 - minutes}:12" + @" | Player ""aaa"" (id=aaa= pos=<10011, 5461.9, 253.6>)[HP: 2.89747] hit by Player ""bbb"" (id=bbb= pos=<10013.7, 5466.8, 253.6>) into Head(0) for 8.68342 damage (Bullet_380) with CR-61 Skorpion from 5.64337 meters",
 				CancellationToken.None);
 			var log2 = await tracer.Trace(
 				@"10:11:12 | Player ""aaa"" (DEAD) (id=aaa= pos=<11492.3, 5503.6, 243.2>) died. Stats> Water: 848.615 Energy: 0 Bleed sources: 3",
@@ -446,7 +447,8 @@ namespace DZALT.Tests.Entities.Tracing
 			var eventLog = await Get<EventLog>().SingleOrDefaultAsync();
 
 			log1.Should().NotBeNull();
-			log2.Should().BeNull();
+			log2.Should().NotBeNull();
+			(log2 as IgnoredLog).Should().NotBeNull();
 			player.Should().NotBeNull();
 			eventLog.Should().NotBeNull();
 			eventLog.Id.Should().Be(log1.Id);
@@ -480,7 +482,8 @@ namespace DZALT.Tests.Entities.Tracing
 			var eventLog = await Get<EventLog>().SingleOrDefaultAsync();
 
 			log1.Should().NotBeNull();
-			log2.Should().BeNull();
+			log2.Should().NotBeNull();
+			(log2 as IgnoredLog).Should().NotBeNull();
 			player.Should().NotBeNull();
 			eventLog.Should().NotBeNull();
 			eventLog.Id.Should().Be(log1.Id);
@@ -500,9 +503,10 @@ namespace DZALT.Tests.Entities.Tracing
 		}
 
 		[Theory]
-		[InlineData(@"10:11:12 | Player ""aaa"" (DEAD) (id=aaa= pos=<11486.1, 14482.8, 58.1>) bled out")]
-		[InlineData(@"10:11:12 | Player ""aaa"" (id=aaa= pos=<11094.6, 5600.4, 317.4>) built ShelterStick with Hands")]
-		public async Task ShouldIgnoreSomeEvents(string line)
+		[InlineData(@"10:11:12 | Player ""aaa"" (DEAD) (id=aaa= pos=<11486.1, 14482.8, 58.1>) bled out", true)]
+		[InlineData(@"10:11:12 | Player ""aaa"" (id=aaa= pos=<11094.6, 5600.4, 317.4>) built ShelterStick with Hands", true)]
+		[InlineData(@"10:11:12 | Player ""aaa""(id=Unknown) has been disconnected", false)]
+		public async Task ShouldIgnoreSomeEvents(string line, bool identifiedPlayer)
 		{
 			var log = await tracer.Trace(
 				line,
@@ -511,11 +515,11 @@ namespace DZALT.Tests.Entities.Tracing
 
 			log.Should().NotBeNull();
 			var player = await Get<Player>().SingleOrDefaultAsync();
-			player.Should().NotBeNull();
+			(player != null).Should().Be(identifiedPlayer);
 			var ignoredLog = Get<IgnoredLog>().SingleOrDefault();
 			ignoredLog.Should().NotBeNull();
 			ignoredLog.Id.Should().Be(log.Id);
-			ignoredLog.PlayerId.Should().Be(player.Id);
+			ignoredLog.PlayerId.Should().Be(identifiedPlayer ? player.Id : null);
 			ignoredLog.Date.Should().Be(new DateTime(1, 1, 1, 10, 11, 12));
 			ignoredLog.Body.Should().Be(line);
 		}

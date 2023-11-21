@@ -52,7 +52,7 @@ namespace DZALT.Entities.Selection.PlayTimeByPlayer
 				group ps.To.Ticks - ps.From.Ticks by ps.Id into g
 				select new PlayTimeByPlayerResult()
 				{
-					Name = playerNicknames[g.Key],
+					Name = playerNicknames[g.Key.Value],
 					Time = TimeSpan.FromTicks(g.Sum())
 				};
 
