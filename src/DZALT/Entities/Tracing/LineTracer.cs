@@ -33,12 +33,10 @@ namespace DZALT.Entities.Tracing
 			@"^(?<time>.*?) \| Player ""(?<nickname>.*?)"" \(id=(?<guid>.*?) pos=<(?<x>.*?), (?<y>.*?), (?<z>.*?)>\) committed suicide$");
 		private static readonly Regex PlayerHitExp = new Regex(
 			@"^(?<time>.*?) \| Player ""(?<nickname>.*?)"" (\(DEAD\) )?\(id=(?<guid>.*?) pos=<(?<x>.*?), (?<y>.*?), (?<z>.*?)>\)(\[HP: (?<health>.*?)\])? (?<action>(hit|killed)) by (?<enemy>.*?)( into (?<bodypart>.*?) for (?<damage>.*?) damage \((?<hitter>.*?)\))?( with (?<weapon>.*?)( from (?<distance>.*?) meters)?)?$");
-		private static readonly Regex PlayerBledOutExp = new Regex(
-			@"^(?<time>.*?) \| Player ""(?<nickname>.*?)"" (\(DEAD\) )?\(id=(?<guid>.*?) pos=<(?<x>.*?), (?<y>.*?), (?<z>.*?)>\) bled out$");
-		private static readonly Regex PlayerBuiltExp = new Regex(
-			@"^(?<time>.*?) \| Player ""(?<nickname>.*?)"" \(id=(?<guid>.*?) pos=<(?<x>.*?), (?<y>.*?), (?<z>.*?)>\) built .*?$");
+		private static readonly Regex PlayerIgnoredExp = new Regex(
+			@"^(?<time>.*?) \| Player ""(?<nickname>.*?)"" (\(DEAD\) )?\(id=(?<guid>.*?) pos=<(?<x>.*?), (?<y>.*?), (?<z>.*?)>\) .*?$");
 		private static readonly Regex PlayerExp = new Regex(
-			@"^Player ""(?<nickname>.*?)"" \(id=(?<guid>.*?) pos=<(?<x>.*?), (?<y>.*?), (?<z>.*?)>\)$");
+			@"^Player ""(?<nickname>.*?)"" (\(DEAD\) )?\(id=(?<guid>.*?) pos=<(?<x>.*?), (?<y>.*?), (?<z>.*?)>\)$");
 
 		private readonly IRepository repository;
 		private readonly Dictionary<string, Player> players;
@@ -121,14 +119,10 @@ namespace DZALT.Entities.Tracing
 				return await GetEventForConsciousness(match, EventLog.EventType.CONSCIOUS, cancellationToken);
 			}
 
-			if (PlayerBledOutExp.IsMatch(log))
+			match = PlayerIgnoredExp.Match(log);
+			if (match.Success)
 			{
-				return null;
-			}
-
-			if (PlayerBuiltExp.IsMatch(log))
-			{
-				return null;
+				return await IgnoreLog(match, cancellationToken);
 			}
 
 			throw new ApplicationException($"Could not trace log: {log}");
@@ -420,6 +414,29 @@ namespace DZALT.Entities.Tracing
 			repository.Add(eventLog);
 
 			return eventLog;
+		}
+
+		private async Task<IgnoredLog> IgnoreLog(Match match, CancellationToken cancellationToken)
+		{
+			string time = match.Groups["time"].Value;
+			string guid = match.Groups["guid"].Value;
+			
+			var player = await GetPlayer(guid, cancellationToken);
+			if (player == null)
+			{
+				return null;
+			}
+
+			var ignoredLog = new IgnoredLog()
+			{
+				Player = player,
+				Date = new DateTime(0) + TimeOnly.Parse(time).ToTimeSpan(),
+				Body = match.Groups[0].Value,
+			};
+
+			repository.Add(ignoredLog);
+
+			return ignoredLog;
 		}
 
 		private EventLog FindLastEventLog(Func<EventLog, bool> filter)

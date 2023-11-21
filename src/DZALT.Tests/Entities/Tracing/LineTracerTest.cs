@@ -10,31 +10,31 @@ using Xunit;
 
 namespace DZALT.Tests.Entities.Tracing
 {
-    public class LineTracerTest : BaseRepositoryTest
-    {
-        private readonly LineTracer tracer;
+	public class LineTracerTest : BaseRepositoryTest
+	{
+		private readonly LineTracer tracer;
 
-        public LineTracerTest()
-        {
+		public LineTracerTest()
+		{
 			tracer = new LineTracer(this);
 		}
 
-        [Fact]
+		[Fact]
 		public async Task ShouldAddPlayerAndNickname()
-        {
+		{
 			await tracer.Trace(
 				"11:23:45 | Player \"abc\" is connected (id=abc-ABC=)",
 				CancellationToken.None);
-            await SubmitChanges();
+			await SubmitChanges();
 
-            var player = await Get<Player>().SingleOrDefaultAsync();
-            var nickname = await Get<Nickname>().SingleOrDefaultAsync();
+			var player = await Get<Player>().SingleOrDefaultAsync();
+			var nickname = await Get<Nickname>().SingleOrDefaultAsync();
 
 			player.Should().NotBeNull();
-            player.Guid.Should().Be("abc-ABC=");
-            nickname.Should().NotBeNull();
-            nickname.Name.Should().Be("abc");
-            nickname.PlayerId.Should().Be(player.Id);
+			player.Guid.Should().Be("abc-ABC=");
+			nickname.Should().NotBeNull();
+			nickname.Name.Should().Be("abc");
+			nickname.PlayerId.Should().Be(player.Id);
 		}
 
 		[Fact]
@@ -86,21 +86,21 @@ namespace DZALT.Tests.Entities.Tracing
 			nickname.Should().BeNull();
 		}
 
-        [Fact]
+		[Fact]
 		public async Task ShouldSaveSessions()
-        {
-            await tracer.Trace(
+		{
+			await tracer.Trace(
 				"11:23:45 | Player \"abc\" is connected (id=abc-ABC=)",
-                CancellationToken.None);
-            await tracer.Trace(
+				CancellationToken.None);
+			await tracer.Trace(
 				"11:23:46 | Player \"aaa\" is connected (id=_aaaAAA=)",
-                CancellationToken.None);
-            await tracer.Trace(
+				CancellationToken.None);
+			await tracer.Trace(
 				"12:23:46 | Player \"aaa\"(id=_aaaAAA=) has been disconnected",
-                CancellationToken.None);
-            await tracer.Trace(
+				CancellationToken.None);
+			await tracer.Trace(
 				"13:23:45 | Player \"abc\"(id=abc-ABC=) has been disconnected",
-                CancellationToken.None);
+				CancellationToken.None);
 			await SubmitChanges();
 
 			var sessionLogs = await Get<SessionLog>().ToArrayAsync();
@@ -117,11 +117,13 @@ namespace DZALT.Tests.Entities.Tracing
 			});
 		}
 
-		[Fact]
-		public async Task ShouldAddEventForHitByPlayer()
+		[Theory]
+		[InlineData(@"10:11:12 | Player ""aaa"" (id=aaa= pos=<10011, 5461.9, 253.6>)[HP: 2.89747] hit by Player ""bbb"" (id=bbb= pos=<10013.7, 5466.8, 253.6>) into Head(0) for 8.68342 damage (Bullet_380) with CR-61 Skorpion from 5.64337 meters")]
+		[InlineData(@"10:11:12 | Player ""aaa"" (id=aaa= pos=<10011, 5461.9, 253.6>)[HP: 2.89747] hit by Player ""bbb"" (DEAD) (id=bbb= pos=<10013.7, 5466.8, 253.6>) into Head(0) for 8.68342 damage (Bullet_380) with CR-61 Skorpion from 5.64337 meters")]
+		public async Task ShouldAddEventForHitByPlayer(string line)
 		{
 			await tracer.Trace(
-				@"10:11:12 | Player ""aaa"" (id=aaa= pos=<10011, 5461.9, 253.6>)[HP: 2.89747] hit by Player ""bbb"" (id=bbb= pos=<10013.7, 5466.8, 253.6>) into Head(0) for 8.68342 damage (Bullet_380) with CR-61 Skorpion from 5.64337 meters",
+				line,
 				CancellationToken.None);
 			await SubmitChanges();
 
@@ -497,24 +499,25 @@ namespace DZALT.Tests.Entities.Tracing
 			eventLog.Distance.Should().BeNull();
 		}
 
-		[Fact]
-		public async Task ShouldIgnoreBledOutEvent()
+		[Theory]
+		[InlineData(@"10:11:12 | Player ""aaa"" (DEAD) (id=aaa= pos=<11486.1, 14482.8, 58.1>) bled out")]
+		[InlineData(@"10:11:12 | Player ""aaa"" (id=aaa= pos=<11094.6, 5600.4, 317.4>) built ShelterStick with Hands")]
+		public async Task ShouldIgnoreSomeEvents(string line)
 		{
 			var log = await tracer.Trace(
-				@"10:11:12 | Player ""aaa"" (DEAD) (id=aaa= pos=<11486.1, 14482.8, 58.1>) bled out",
+				line,
 				CancellationToken.None);
+			await SubmitChanges();
 
-			log.Should().BeNull();
-		}
-
-		[Fact]
-		public async Task ShouldIgnoreBuiltEvent()
-		{
-			var log = await tracer.Trace(
-				@"11:44:31 | Player ""aaa"" (id=aaa= pos=<11094.6, 5600.4, 317.4>) built ShelterStick with Hands",
-				CancellationToken.None);
-
-			log.Should().BeNull();
+			log.Should().NotBeNull();
+			var player = await Get<Player>().SingleOrDefaultAsync();
+			player.Should().NotBeNull();
+			var ignoredLog = Get<IgnoredLog>().SingleOrDefault();
+			ignoredLog.Should().NotBeNull();
+			ignoredLog.Id.Should().Be(log.Id);
+			ignoredLog.PlayerId.Should().Be(player.Id);
+			ignoredLog.Date.Should().Be(new DateTime(1, 1, 1, 10, 11, 12));
+			ignoredLog.Body.Should().Be(line);
 		}
 	}
 }
