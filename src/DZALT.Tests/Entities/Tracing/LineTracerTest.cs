@@ -63,8 +63,7 @@ namespace DZALT.Tests.Entities.Tracing
 				CancellationToken.None);
 			await SubmitChanges();
 
-			log.Should().NotBeNull();
-			(log as IgnoredLog).Should().NotBeNull();
+			log.Should().BeNull();
 			(await Get<Player>().SingleOrDefaultAsync()).Should().BeNull();
 		}
 
@@ -447,8 +446,7 @@ namespace DZALT.Tests.Entities.Tracing
 			var eventLog = await Get<EventLog>().SingleOrDefaultAsync();
 
 			log1.Should().NotBeNull();
-			log2.Should().NotBeNull();
-			(log2 as IgnoredLog).Should().NotBeNull();
+			log2.Should().BeNull();
 			player.Should().NotBeNull();
 			eventLog.Should().NotBeNull();
 			eventLog.Id.Should().Be(log1.Id);
@@ -482,8 +480,7 @@ namespace DZALT.Tests.Entities.Tracing
 			var eventLog = await Get<EventLog>().SingleOrDefaultAsync();
 
 			log1.Should().NotBeNull();
-			log2.Should().NotBeNull();
-			(log2 as IgnoredLog).Should().NotBeNull();
+			log2.Should().BeNull();
 			player.Should().NotBeNull();
 			eventLog.Should().NotBeNull();
 			eventLog.Id.Should().Be(log1.Id);
@@ -503,25 +500,16 @@ namespace DZALT.Tests.Entities.Tracing
 		}
 
 		[Theory]
-		[InlineData(@"10:11:12 | Player ""aaa"" (DEAD) (id=aaa= pos=<11486.1, 14482.8, 58.1>) bled out", true)]
-		[InlineData(@"10:11:12 | Player ""aaa"" (id=aaa= pos=<11094.6, 5600.4, 317.4>) built ShelterStick with Hands", true)]
-		[InlineData(@"10:11:12 | Player ""aaa""(id=Unknown) has been disconnected", false)]
-		public async Task ShouldIgnoreSomeEvents(string line, bool identifiedPlayer)
+		[InlineData(@"10:11:12 | Player ""aaa"" (DEAD) (id=aaa= pos=<11486.1, 14482.8, 58.1>) bled out")]
+		[InlineData(@"10:11:12 | Player ""aaa"" (id=aaa= pos=<11094.6, 5600.4, 317.4>) built ShelterStick with Hands")]
+		public async Task ShouldIgnoreSomeEvents(string line)
 		{
 			var log = await tracer.Trace(
 				line,
 				CancellationToken.None);
 			await SubmitChanges();
 
-			log.Should().NotBeNull();
-			var player = await Get<Player>().SingleOrDefaultAsync();
-			(player != null).Should().Be(identifiedPlayer);
-			var ignoredLog = Get<IgnoredLog>().SingleOrDefault();
-			ignoredLog.Should().NotBeNull();
-			ignoredLog.Id.Should().Be(log.Id);
-			ignoredLog.PlayerId.Should().Be(identifiedPlayer ? player.Id : null);
-			ignoredLog.Date.Should().Be(new DateTime(1, 1, 1, 10, 11, 12));
-			ignoredLog.Body.Should().Be(line);
+			log.Should().BeNull();
 		}
 	}
 }
