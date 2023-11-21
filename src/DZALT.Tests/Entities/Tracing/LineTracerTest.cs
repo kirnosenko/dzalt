@@ -428,16 +428,6 @@ namespace DZALT.Tests.Entities.Tracing
 		}
 
 		[Fact]
-		public async Task ShouldNotAddEventForBledOut()
-		{
-			var log = await tracer.Trace(
-				@"10:11:12 | Player ""aaa"" (DEAD) (id=aaa= pos=<11486.1, 14482.8, 58.1>) bled out",
-				CancellationToken.None);
-
-			log.Should().BeNull();
-		}
-
-		[Fact]
 		public async Task ShouldAddSuicideEvent()
 		{
 			var log1 = await tracer.Trace(
@@ -503,6 +493,26 @@ namespace DZALT.Tests.Entities.Tracing
 			eventLog.Hitter.Should().BeNull();
 			eventLog.Weapon.Should().BeNull();
 			eventLog.Distance.Should().BeNull();
+		}
+
+		[Fact]
+		public async Task ShouldIgnoreBledOutEvent()
+		{
+			var log = await tracer.Trace(
+				@"10:11:12 | Player ""aaa"" (DEAD) (id=aaa= pos=<11486.1, 14482.8, 58.1>) bled out",
+				CancellationToken.None);
+
+			log.Should().BeNull();
+		}
+
+		[Fact]
+		public async Task ShouldIgnoreBuiltEvent()
+		{
+			var log = await tracer.Trace(
+				@"11:44:31 | Player ""aaa"" (id=aaa= pos=<11094.6, 5600.4, 317.4>) built ShelterStick with Hands",
+				CancellationToken.None);
+
+			log.Should().BeNull();
 		}
 	}
 }

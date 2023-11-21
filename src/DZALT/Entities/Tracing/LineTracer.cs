@@ -27,14 +27,16 @@ namespace DZALT.Entities.Tracing
 			@"^(?<time>.*?) \| Player ""(?<nickname>.*?)"" \(id=(?<guid>.*?) pos=<(?<x>.*?), (?<y>.*?), (?<z>.*?)>\) regained consciousness$");
 		private static readonly Regex PlayerDeadExp = new Regex(
 			@"^(?<time>.*?) \| Player ""(?<nickname>.*?)"" (\(DEAD\) )?\(id=(?<guid>.*?) pos=<(?<x>.*?), (?<y>.*?), (?<z>.*?)>\) died. Stats> (?<stats>.*?)$");
-		private static readonly Regex PlayerBledOutExp = new Regex(
-			@"^(?<time>.*?) \| Player ""(?<nickname>.*?)"" (\(DEAD\) )?\(id=(?<guid>.*?) pos=<(?<x>.*?), (?<y>.*?), (?<z>.*?)>\) bled out$");
 		private static readonly Regex PlayerSuicideExp = new Regex(
 			@"^(?<time>.*?) \| Player '(?<nickname>.*?)' \(id=(?<guid>.*?)\) committed suicide.$");
 		private static readonly Regex PlayerSuicideExp2 = new Regex(
 			@"^(?<time>.*?) \| Player ""(?<nickname>.*?)"" \(id=(?<guid>.*?) pos=<(?<x>.*?), (?<y>.*?), (?<z>.*?)>\) committed suicide$");
 		private static readonly Regex PlayerHitExp = new Regex(
 			@"^(?<time>.*?) \| Player ""(?<nickname>.*?)"" (\(DEAD\) )?\(id=(?<guid>.*?) pos=<(?<x>.*?), (?<y>.*?), (?<z>.*?)>\)(\[HP: (?<health>.*?)\])? (?<action>(hit|killed)) by (?<enemy>.*?)( into (?<bodypart>.*?) for (?<damage>.*?) damage \((?<hitter>.*?)\))?( with (?<weapon>.*?)( from (?<distance>.*?) meters)?)?$");
+		private static readonly Regex PlayerBledOutExp = new Regex(
+			@"^(?<time>.*?) \| Player ""(?<nickname>.*?)"" (\(DEAD\) )?\(id=(?<guid>.*?) pos=<(?<x>.*?), (?<y>.*?), (?<z>.*?)>\) bled out$");
+		private static readonly Regex PlayerBuiltExp = new Regex(
+			@"^(?<time>.*?) \| Player ""(?<nickname>.*?)"" \(id=(?<guid>.*?) pos=<(?<x>.*?), (?<y>.*?), (?<z>.*?)>\) built .*?$");
 		private static readonly Regex PlayerExp = new Regex(
 			@"^Player ""(?<nickname>.*?)"" \(id=(?<guid>.*?) pos=<(?<x>.*?), (?<y>.*?), (?<z>.*?)>\)$");
 
@@ -120,6 +122,11 @@ namespace DZALT.Entities.Tracing
 			}
 
 			if (PlayerBledOutExp.IsMatch(log))
+			{
+				return null;
+			}
+
+			if (PlayerBuiltExp.IsMatch(log))
 			{
 				return null;
 			}
