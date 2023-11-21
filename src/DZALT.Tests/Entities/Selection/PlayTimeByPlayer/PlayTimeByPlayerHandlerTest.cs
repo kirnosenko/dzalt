@@ -71,7 +71,7 @@ namespace DZALT.Entities.Selection.PlayTimeByPlayer
 			await SubmitChanges();
 
 			var result = await handler.Handle(
-				PlayTimeByPlayerQuery.Instance,
+				PlayTimeByPlayerQuery.Create(),
 				default);
 
 			result.Length.Should().Be(2);
@@ -79,6 +79,76 @@ namespace DZALT.Entities.Selection.PlayTimeByPlayer
 				.Should().Be(new TimeSpan(14, 00, 10));
 			result.Single(x => x.Name == "p2").Time
 				.Should().Be(new TimeSpan(01, 30, 30));
+		}
+
+		[Theory]
+		[InlineData(null, null, 7)]
+		[InlineData(null, 13, 5)]
+		[InlineData(null, 12, 1)]
+		[InlineData(11, null, 7)]
+		[InlineData(12, null, 6)]
+		[InlineData(13, null, 2)]
+		[InlineData(12, 13, 4)]
+		public async Task ShouldReturnPlayTimeByPlayerWithinDateRange(
+			int? from, int? to, int hours)
+		{
+			DateTime? fromDate = from == null ? null : new DateTime(2023, 11, from.Value);
+			DateTime? toDate = to == null ? null : new DateTime(2023, 11, to.Value);
+
+			var p1 = new Player()
+			{
+				Guid = "p1",
+			};
+			var logs = new SessionLog[]
+			{
+				new SessionLog()
+				{
+					Player = p1,
+					Type = SessionLog.SessionType.CONNECTED,
+					Date = new DateTime(2023, 11, 11, 23, 00, 00),
+				},
+				new SessionLog()
+				{
+					Player = p1,
+					Type = SessionLog.SessionType.DISCONNECTED,
+					Date = new DateTime(2023, 11, 12, 01, 00, 00),
+				},
+				new SessionLog()
+				{
+					Player = p1,
+					Type = SessionLog.SessionType.CONNECTED,
+					Date = new DateTime(2023, 11, 12, 10, 00, 00),
+				},
+				new SessionLog()
+				{
+					Player = p1,
+					Type = SessionLog.SessionType.DISCONNECTED,
+					Date = new DateTime(2023, 11, 12, 11, 00, 00),
+				},
+				new SessionLog()
+				{
+					Player = p1,
+					Type = SessionLog.SessionType.CONNECTED,
+					Date = new DateTime(2023, 11, 12, 22, 00, 00),
+				},
+				new SessionLog()
+				{
+					Player = p1,
+					Type = SessionLog.SessionType.DISCONNECTED,
+					Date = new DateTime(2023, 11, 13, 02, 00, 00),
+				},
+			};
+			Add(p1);
+			AddRange(logs);
+			await SubmitChanges();
+
+			var result = await handler.Handle(
+				PlayTimeByPlayerQuery.Create(fromDate, toDate),
+				default);
+
+			result.Length.Should().Be(1);
+			result.Single(x => x.Name == "p1").Time
+				.Should().Be(TimeSpan.FromHours(hours));
 		}
 	}
 }

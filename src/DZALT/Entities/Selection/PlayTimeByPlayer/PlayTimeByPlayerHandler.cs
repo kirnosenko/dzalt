@@ -40,6 +40,9 @@ namespace DZALT.Entities.Selection.PlayTimeByPlayer
 					.Where(x => x.PlayerId == sc.PlayerId && x.Type == SessionLog.SessionType.DISCONNECTED && x.Date >= sc.Date)
 					.OrderBy(x => x.Date)
 					.Take(1)
+				where
+					(query.From == null || query.From < sd.Date) &&
+					(query.To == null || query.To > sc.Date)
 				select new
 				{
 					Id = sc.PlayerId,
@@ -49,7 +52,7 @@ namespace DZALT.Entities.Selection.PlayTimeByPlayer
 
 			var playerTimes =
 				from ps in playerSessions
-				group ps.To.Ticks - ps.From.Ticks by ps.Id into g
+				group (query.To != null && query.To < ps.To ? query.To.Value : ps.To).Ticks - (query.From != null && query.From > ps.From ? query.From.Value : ps.From).Ticks by ps.Id into g
 				select new PlayTimeByPlayerResult()
 				{
 					Name = playerNicknames[g.Key],

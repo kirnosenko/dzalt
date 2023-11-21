@@ -1,4 +1,5 @@
-﻿using System.Threading;
+﻿using System;
+using System.Threading;
 using System.Threading.Tasks;
 using Asp.Versioning;
 using Microsoft.AspNetCore.Mvc;
@@ -23,9 +24,13 @@ namespace DZALT.Web.Controllers
 		[HttpGet]
 		[Route("[action]")]
 		public async Task<IActionResult> PlayTimeByPlayerHandler(
+			[FromQuery] DateTime? from,
+			[FromQuery] DateTime? to,
 			CancellationToken cancellationToken)
 		{
-			var data = await mediator.Send(PlayTimeByPlayerQuery.Instance, cancellationToken);
+			var data = await mediator.Send(
+				PlayTimeByPlayerQuery.Create(from, to),
+				cancellationToken);
 
 			return Ok(data);
 		}
