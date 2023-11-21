@@ -299,6 +299,16 @@ namespace DZALT.Entities.Tracing
 				Event = EventLog.EventType.ACCIDENT,
 			};
 
+			var hit = FindLastEventLog(x =>
+				x.Player == player &&
+				x.Event == EventLog.EventType.HIT &&
+				x.EnemyPlayer != null);
+			if (hit != null && logTime - TimeOnly.FromDateTime(hit.Date) <= TimeSpan.FromMinutes(5))
+			{
+				eventLog.EnemyPlayer = hit.EnemyPlayer;
+				eventLog.Event = EventLog.EventType.MURDER;
+			}
+
 			repository.Add(eventLog);
 			return eventLog;
 		}
