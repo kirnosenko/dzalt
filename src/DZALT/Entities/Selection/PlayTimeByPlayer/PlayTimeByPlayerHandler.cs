@@ -4,15 +4,20 @@ using System.Threading;
 using System.Threading.Tasks;
 using MediatR;
 using Microsoft.EntityFrameworkCore;
+using DZALT.Entities.Selection.NamesByPlayer;
 
 namespace DZALT.Entities.Selection.PlayTimeByPlayer
 {
 	public class PlayTimeByPlayerHandler : IRequestHandler<PlayTimeByPlayerQuery, PlayTimeByPlayerResult[]>
 	{
+		private readonly IMediator mediator;
 		private readonly IRepository repository;
 
-		public PlayTimeByPlayerHandler(IRepository repository)
+		public PlayTimeByPlayerHandler(
+			IMediator mediator,
+			IRepository repository)
 		{
+			this.mediator = mediator;
 			this.repository = repository;
 		}
 
@@ -20,18 +25,9 @@ namespace DZALT.Entities.Selection.PlayTimeByPlayer
 			PlayTimeByPlayerQuery query,
 			CancellationToken cancellationToken)
 		{
-			var playerNicknames = await (
-				from p in repository.Get<Player>()
-				let name = repository.Get<Nickname>()
-					.Where(x => x.PlayerId == p.Id)
-					.Select(x => x.Name)
-					.FirstOrDefault()
-				select new
-				{
-					Id = p.Id,
-					Guid = p.Guid,
-					Name = name,
-				}).ToDictionaryAsync(x => x.Id, x => x.Name ?? x.Guid, cancellationToken);
+			var playerNicknames = await mediator.Send(
+				NamesByPlayerQuery.Instance,
+				cancellationToken);
 
 			var playerSessions = await (
 				from sc in repository.Get<SessionLog>()

@@ -1,18 +1,25 @@
 ﻿using System;
+using System.Collections.Generic;
 using System.Linq;
+using System.Threading;
 using System.Threading.Tasks;
 using FluentAssertions;
+using MediatR;
 using Xunit;
+using NSubstitute;
+using DZALT.Entities.Selection.NamesByPlayer;
 
 namespace DZALT.Entities.Selection.PlayTimeByPlayer
 {
 	public class PlayTimeByPlayerHandlerTest : BaseRepositoryTest
 	{
+		private readonly IMediator mediator;
 		private readonly PlayTimeByPlayerHandler handler;
 
 		public PlayTimeByPlayerHandlerTest()
 		{
-			handler = new PlayTimeByPlayerHandler(this);
+			mediator = Substitute.For<IMediator>();
+			handler = new PlayTimeByPlayerHandler(mediator, this);
 		}
 
 		[Fact]
@@ -69,6 +76,15 @@ namespace DZALT.Entities.Selection.PlayTimeByPlayer
 			Add(p2);
 			AddRange(logs);
 			await SubmitChanges();
+
+			mediator.Send(
+				Arg.Any<NamesByPlayerQuery>(),
+				Arg.Any<CancellationToken>())
+				.Returns(new Dictionary<int, string>()
+				{
+					{ p1.Id, p1.Guid },
+					{ p2.Id, p2.Guid },
+				});
 
 			var result = await handler.Handle(
 				PlayTimeByPlayerQuery.Create(),
@@ -141,6 +157,14 @@ namespace DZALT.Entities.Selection.PlayTimeByPlayer
 			Add(p1);
 			AddRange(logs);
 			await SubmitChanges();
+
+			mediator.Send(
+				Arg.Any<NamesByPlayerQuery>(),
+				Arg.Any<CancellationToken>())
+				.Returns(new Dictionary<int, string>()
+				{
+					{ p1.Id, p1.Guid },
+				});
 
 			var result = await handler.Handle(
 				PlayTimeByPlayerQuery.Create(fromDate, toDate),

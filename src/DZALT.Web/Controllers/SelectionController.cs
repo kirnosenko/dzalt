@@ -4,6 +4,7 @@ using System.Threading.Tasks;
 using Asp.Versioning;
 using Microsoft.AspNetCore.Mvc;
 using MediatR;
+using DZALT.Entities.Selection.KillsByPlayer;
 using DZALT.Entities.Selection.PlayTimeByPlayer;
 
 namespace DZALT.Web.Controllers
@@ -23,13 +24,27 @@ namespace DZALT.Web.Controllers
 
 		[HttpGet]
 		[Route("[action]")]
-		public async Task<IActionResult> PlayTimeByPlayerHandler(
+		public async Task<IActionResult> PlayTimeByPlayer(
 			[FromQuery] DateTime? from,
 			[FromQuery] DateTime? to,
 			CancellationToken cancellationToken)
 		{
 			var data = await mediator.Send(
 				PlayTimeByPlayerQuery.Create(from, to),
+				cancellationToken);
+
+			return Ok(data);
+		}
+
+		[HttpGet]
+		[Route("[action]")]
+		public async Task<IActionResult> KillsByPlayer(
+			[FromQuery] DateTime? from,
+			[FromQuery] DateTime? to,
+			CancellationToken cancellationToken)
+		{
+			var data = await mediator.Send(
+				KillsByPlayerQuery.Create(from, to),
 				cancellationToken);
 
 			return Ok(data);
