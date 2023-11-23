@@ -28,7 +28,7 @@ namespace DZALT.Entities.Selection.PlayerLog
 			var playerName = query.Nickname;
 			var playerId = await repository.Get<Nickname>()
 				.Where(x => x.Name == playerName)
-				.Select(x => x.Id)
+				.Select(x => x.PlayerId)
 				.FirstOrDefaultAsync(cancellationToken);
 
 			var playerNicknames = await mediator.Send(
@@ -40,7 +40,7 @@ namespace DZALT.Entities.Selection.PlayerLog
 				.ToArrayAsync(cancellationToken);
 			var events = await repository.Get<EventLog>()
 				.Where(x =>
-					x.EnemyPlayer != null &&
+					x.EnemyPlayer != null && x.Event == EventLog.EventType.MURDER &&
 					(x.PlayerId == playerId || x.EnemyPlayerId == playerId))
 				.ToArrayAsync(cancellationToken);
 
@@ -55,14 +55,13 @@ namespace DZALT.Entities.Selection.PlayerLog
 			{
 				string victum = e.PlayerId == playerId ? playerName : playerNicknames[e.PlayerId];
 				string attacker = e.EnemyPlayerId == playerId ? playerName : playerNicknames[e.EnemyPlayerId.Value];
-				var action = e.Event == EventLog.EventType.MURDER ? "killed" : "hit";
 				var distance = e.Distance == null ? "." : $" from {e.Distance} meters.";
-				var log = $"{victum} {action} by {attacker} with {e.Weapon}{distance}";
+				var log = $"{victum} killed by {attacker} with {e.Weapon}{distance}";
 
 				return (e.Date, log);
 			}).ToArray();
 
-			return sessionsLogs.Union(eventsLogs)
+			return sessionsLogs.Concat(eventsLogs)
 				.OrderBy(x => x.Date)
 				.Select(x => $"{x.Date}: {x.log}")
 				.ToArray();
