@@ -6,6 +6,7 @@ using Microsoft.AspNetCore.Mvc;
 using MediatR;
 using DZALT.Entities.Selection.KillsByPlayer;
 using DZALT.Entities.Selection.PlayTimeByPlayer;
+using DZALT.Entities.Selection.PlayerLog;
 
 namespace DZALT.Web.Controllers
 {
@@ -20,6 +21,19 @@ namespace DZALT.Web.Controllers
 		public SelectionController(IMediator mediator)
 		{
 			this.mediator = mediator;
+		}
+
+		[HttpGet]
+		[Route("[action]")]
+		public async Task<IActionResult> PlayerLog(
+			[FromQuery] string nickname,
+			CancellationToken cancellationToken)
+		{
+			var data = await mediator.Send(
+				PlayerLogQuery.Create(nickname),
+				cancellationToken);
+
+			return Ok(data);
 		}
 
 		[HttpGet]

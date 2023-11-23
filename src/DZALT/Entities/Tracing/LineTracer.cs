@@ -297,9 +297,10 @@ namespace DZALT.Entities.Tracing
 
 			var hit = FindLastEventLog(x =>
 				x.Player == player &&
-				x.Event == EventLog.EventType.HIT &&
 				x.EnemyPlayer != null);
-			if (hit != null && logTime - TimeOnly.FromDateTime(hit.Date) <= TimeSpan.FromMinutes(5))
+			if (hit != null &&
+				hit.Event == EventLog.EventType.HIT &&
+				logTime - TimeOnly.FromDateTime(hit.Date) <= TimeSpan.FromMinutes(5))
 			{
 				eventLog.EnemyPlayer = hit.EnemyPlayer;
 				eventLog.Event = EventLog.EventType.MURDER;
@@ -413,7 +414,7 @@ namespace DZALT.Entities.Tracing
 
 		private EventLog FindLastEventLog(Func<EventLog, bool> filter)
 		{
-			var log = logs				
+			var log = logs
 				.Where(x => x is EventLog)
 				.Where(x => filter(x as EventLog))
 				.OrderByDescending(x => x.Date)

@@ -432,6 +432,30 @@ namespace DZALT.Tests.Entities.Tracing
 		}
 
 		[Fact]
+		public async Task ShouldNotReconsiderAnAccidentAsAMurderAfterMurderAlreadySaved()
+		{
+			var log1 = await tracer.Trace(
+				$"10:11:12" + @" | Player ""aaa"" (id=aaa= pos=<10011, 5461.9, 253.6>)[HP: 2.89747] hit by Player ""bbb"" (id=bbb= pos=<10013.7, 5466.8, 253.6>) into Head(0) for 8.68342 damage (Bullet_380) with CR-61 Skorpion from 5.64337 meters",
+				CancellationToken.None);
+			var log2 = await tracer.Trace(
+				@"10:12:13 | Player ""aaa"" (DEAD) (id=aaa= pos=<11492.3, 5503.6, 243.2>) died. Stats> Water: 848.615 Energy: 0 Bleed sources: 3",
+				CancellationToken.None) as EventLog;
+			var log3 = await tracer.Trace(
+				@"10:13:14 | Player ""aaa"" (DEAD) (id=aaa= pos=<11492.3, 5503.6, 243.2>) died. Stats> Water: 848.615 Energy: 0 Bleed sources: 3",
+				CancellationToken.None) as EventLog;
+			await SubmitChanges();
+
+			var player = await Get<Player>().SingleOrDefaultAsync(x => x.Guid == "aaa=");
+			var enemy = await Get<Player>().SingleOrDefaultAsync(x => x.Guid == "bbb=");
+
+			log1.Should().NotBeNull();
+			log2.Should().NotBeNull();
+			log3.Should().NotBeNull();
+			log2.Event.Should().Be(EventLog.EventType.MURDER);
+			log3.Event.Should().Be(EventLog.EventType.ACCIDENT);
+		}
+
+		[Fact]
 		public async Task ShouldAddSuicideEvent()
 		{
 			var log1 = await tracer.Trace(
