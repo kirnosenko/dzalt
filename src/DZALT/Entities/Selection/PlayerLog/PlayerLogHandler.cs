@@ -25,11 +25,14 @@ namespace DZALT.Entities.Selection.PlayerLog
 			PlayerLogQuery query,
 			CancellationToken cancellationToken)
 		{
-			var playerName = query.Nickname;
-			var playerId = await repository.Get<Nickname>()
-				.Where(x => x.Name == playerName)
-				.Select(x => x.PlayerId)
-				.FirstOrDefaultAsync(cancellationToken);
+			var playerName = query.PlayerNickOrGuid;
+			var playerId = await (
+				from p in repository.Get<Player>()
+				join n in repository.Get<Nickname>()
+					on p.Id equals n.PlayerId into leftjoin
+				from x in leftjoin.DefaultIfEmpty()
+				where p.Guid == playerName || x.Name == playerName
+				select p.Id).FirstOrDefaultAsync(cancellationToken);
 
 			var playerNicknames = await mediator.Send(
 				NamesByPlayerQuery.Instance,

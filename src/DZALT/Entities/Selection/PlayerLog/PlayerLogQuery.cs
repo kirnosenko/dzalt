@@ -8,13 +8,13 @@ namespace DZALT.Entities.Selection.PlayerLog
 		{
 		}
 
-		public string Nickname { get; init; }
+		public string PlayerNickOrGuid { get; set; }
 
 		public static PlayerLogQuery Create(
-			string nickname)
+			string playerNickOrGuid)
 			=> new PlayerLogQuery()
 			{
-				Nickname = nickname
+				PlayerNickOrGuid = playerNickOrGuid,
 			};
 	}
 }
