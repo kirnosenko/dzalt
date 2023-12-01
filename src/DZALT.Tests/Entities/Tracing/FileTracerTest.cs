@@ -84,34 +84,45 @@ namespace DZALT.Entities.Tracing
 		[Fact]
 		public async Task ShouldSetDateForLogAfterMidnight()
 		{
-			var log1 = new SessionLog()
+			var logs = new SessionLog[]
 			{
-				Date = new DateTime(1, 1, 1, 23, 50, 00),
+				new SessionLog()
+				{
+					Date = new DateTime(1, 1, 1, 20, 00, 00),
+				},
+				new SessionLog()
+				{
+					Date = new DateTime(1, 1, 1, 15, 00, 00),
+				},
+				new SessionLog()
+				{
+					Date = new DateTime(1, 1, 1, 10, 00, 00),
+				},
 			};
-			var log2 = new SessionLog()
-			{
-				Date = new DateTime(1, 1, 1, 00, 10, 00),
-			};
+			
 			fileTracer.FileLines = new string[]
 			{
 				"AdminLog started on 2023-11-16 at 12:23:45",
-				"line1",
-				"line2",
+				"0",
+				"1",
+				"2",
 			};
 			lineTracer.Trace(
 				Arg.Any<string>(),
 				Arg.Any<CancellationToken>())
-				.Returns(ci => (ci[0] as string) == "line1" ? log1 : log2);
+				.Returns(ci => logs[int.Parse((ci[0] as string))]);
 
 			await fileTracer.Trace("filename", default);
 
-			await lineTracer.Received(2).Trace(
+			await lineTracer.Received(3).Trace(
 				Arg.Any<string>(),
 				Arg.Any<CancellationToken>());
-			log1.Date
-				.Should().Be(new DateTime(2023, 11, 16, 23, 50, 00));
-			log2.Date
-				.Should().Be(new DateTime(2023, 11, 17, 00, 10, 00));
+			logs[0].Date
+				.Should().Be(new DateTime(2023, 11, 16, 20, 00, 00));
+			logs[1].Date
+				.Should().Be(new DateTime(2023, 11, 17, 15, 00, 00));
+			logs[2].Date
+				.Should().Be(new DateTime(2023, 11, 18, 10, 00, 00));
 		}
 
 		[Fact]
