@@ -118,8 +118,8 @@ namespace DZALT.Tests.Entities.Tracing
 		}
 
 		[Theory]
-		[InlineData(@"10:11:12 | Player ""aaa"" (id=aaa= pos=<10011, 5461.9, 253.6>)[HP: 2.89747] hit by Player ""bbb"" (id=bbb= pos=<10013.7, 5466.8, 253.6>) into Head(0) for 8.68342 damage (Bullet_380) with CR-61 Skorpion from 5.64337 meters")]
-		[InlineData(@"10:11:12 | Player ""aaa"" (id=aaa= pos=<10011, 5461.9, 253.6>)[HP: 2.89747] hit by Player ""bbb"" (DEAD) (id=bbb= pos=<10013.7, 5466.8, 253.6>) into Head(0) for 8.68342 damage (Bullet_380) with CR-61 Skorpion from 5.64337 meters")]
+		[InlineData(@"10:11:12 | Player ""aaa"" (id=aaa= pos=<10011, 5461.9, 253.6>)[HP: 2.89747] hit by Player ""bbb"" (id=bbb= pos=<10013.7, 5466.8, 253.6>) into Head(0) for 8.68342 damage (Bullet_380) with CR-61 Skorpion from 5.64337 meters ")]
+		[InlineData(@"10:11:12 | Player ""aaa"" (id=aaa= pos=<10011, 5461.9, 253.6>)[HP: 2.89747] hit by Player ""bbb"" (DEAD) (id=bbb= pos=<10013.7, 5466.8, 253.6>) into Head(0) for 8.68342 damage (Bullet_380) with CR-61 Skorpion from 5.64337 meters ")]
 		public async Task ShouldAddEventForHitByPlayer(string line)
 		{
 			await tracer.Trace(
@@ -219,7 +219,7 @@ namespace DZALT.Tests.Entities.Tracing
 		public async Task ShouldAddEventForKillByPlayerWithGun()
 		{
 			await tracer.Trace(
-				@"10:11:12 | Player ""aaa"" (DEAD) (id=aaa= pos=<10011, 5461.9, 253.6>) killed by Player ""bbb"" (id=bbb= pos=<10013.6, 5466.6, 253.6>) with CR-61 Skorpion from 5.43375 meters",
+				@"10:11:12 | Player ""aaa"" (DEAD) (id=aaa= pos=<10011, 5461.9, 253.6>) killed by Player ""bbb"" (id=bbb= pos=<10013.6, 5466.6, 253.6>) with CR-61 Skorpion from 5.43375 meters ",
 				CancellationToken.None);
 			await SubmitChanges();
 

@@ -32,7 +32,7 @@ namespace DZALT.Entities.Tracing
 		private static readonly Regex PlayerSuicideExp2 = new Regex(
 			@"^(?<time>.*?) \| Player ""(?<nickname>.*?)"" \(id=(?<guid>.*?) pos=<(?<x>.*?), (?<y>.*?), (?<z>.*?)>\) committed suicide$");
 		private static readonly Regex PlayerHitExp = new Regex(
-			@"^(?<time>.*?) \| Player ""(?<nickname>.*?)"" (\(DEAD\) )?\(id=(?<guid>.*?) pos=<(?<x>.*?), (?<y>.*?), (?<z>.*?)>\)(\[HP: (?<health>.*?)\])? (?<action>(hit|killed)) by (?<enemy>.*?)( into (?<bodypart>.*?) for (?<damage>.*?) damage \((?<hitter>.*?)\))?( with (?<weapon>.*?)( from (?<distance>.*?) meters)?)?$");
+			@"^(?<time>.*?) \| Player ""(?<nickname>.*?)"" (\(DEAD\) )?\(id=(?<guid>.*?) pos=<(?<x>.*?), (?<y>.*?), (?<z>.*?)>\)(\[HP: (?<health>.*?)\])? (?<action>(hit|killed)) by (?<enemy>.*?)( into (?<bodypart>.*?) for (?<damage>.*?) damage \((?<hitter>.*?)\))?( with (?<weapon>.*?)( from (?<distance>.*?) meters )?)?$");
 		private static readonly Regex PlayerBledOutExp = new Regex(
 			@"^(?<time>.*?) \| Player ""(?<nickname>.*?)"" (\(DEAD\) )?\(id=(?<guid>.*?) pos=<(?<x>.*?), (?<y>.*?), (?<z>.*?)>\) bled out$");
 		private static readonly Regex PlayerBuiltExp = new Regex(
