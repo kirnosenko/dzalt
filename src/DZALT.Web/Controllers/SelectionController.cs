@@ -5,9 +5,11 @@ using Asp.Versioning;
 using Microsoft.AspNetCore.Mvc;
 using MediatR;
 using DZALT.Entities.Selection.KillsByPlayer;
+using DZALT.Entities.Selection.LongestShots;
 using DZALT.Entities.Selection.NamesByPlayer;
-using DZALT.Entities.Selection.PlayTimeByPlayer;
 using DZALT.Entities.Selection.PlayerLog;
+using DZALT.Entities.Selection.PlayerNames;
+using DZALT.Entities.Selection.PlayTimeByPlayer;
 using DZALT.Entities.Selection.PlayTimeIntersection;
 
 namespace DZALT.Web.Controllers
@@ -23,6 +25,35 @@ namespace DZALT.Web.Controllers
 		public SelectionController(IMediator mediator)
 		{
 			this.mediator = mediator;
+		}
+
+		[HttpGet]
+		[Route("[action]")]
+		public async Task<IActionResult> KillsByPlayer(
+			[FromQuery] DateTime? from,
+			[FromQuery] DateTime? to,
+			CancellationToken cancellationToken)
+		{
+			var data = await mediator.Send(
+				KillsByPlayerQuery.Create(from, to),
+				cancellationToken);
+
+			return Ok(data);
+		}
+
+		[HttpGet]
+		[Route("[action]")]
+		public async Task<IActionResult> LongestShots(
+			[FromQuery] string[] bodyparts,
+			[FromQuery] DateTime? from,
+			[FromQuery] DateTime? to,
+			CancellationToken cancellationToken)
+		{
+			var data = await mediator.Send(
+				LongestShotsQuery.Create(bodyparts, from, to),
+				cancellationToken);
+
+			return Ok(data);
 		}
 
 		[HttpGet]
@@ -52,13 +83,12 @@ namespace DZALT.Web.Controllers
 
 		[HttpGet]
 		[Route("[action]")]
-		public async Task<IActionResult> PlayTimeByPlayer(
-			[FromQuery] DateTime? from,
-			[FromQuery] DateTime? to,
+		public async Task<IActionResult> PlayerNames(
+			[FromQuery] string nickname,
 			CancellationToken cancellationToken)
 		{
 			var data = await mediator.Send(
-				PlayTimeByPlayerQuery.Create(from, to),
+				PlayerNamesQuery.Create(nickname),
 				cancellationToken);
 
 			return Ok(data);
@@ -66,13 +96,13 @@ namespace DZALT.Web.Controllers
 
 		[HttpGet]
 		[Route("[action]")]
-		public async Task<IActionResult> KillsByPlayer(
+		public async Task<IActionResult> PlayTimeByPlayer(
 			[FromQuery] DateTime? from,
 			[FromQuery] DateTime? to,
 			CancellationToken cancellationToken)
 		{
 			var data = await mediator.Send(
-				KillsByPlayerQuery.Create(from, to),
+				PlayTimeByPlayerQuery.Create(from, to),
 				cancellationToken);
 
 			return Ok(data);

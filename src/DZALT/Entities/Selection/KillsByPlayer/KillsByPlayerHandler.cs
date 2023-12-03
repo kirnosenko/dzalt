@@ -30,16 +30,15 @@ namespace DZALT.Entities.Selection.KillsByPlayer
 				cancellationToken);
 			
 			var playerKills = await (
-				from p in repository.Get<Player>()
-				join e in repository.Get<EventLog>() on p.Id equals e.EnemyPlayerId
+				from e in repository.Get<EventLog>()
 				where
 					(query.From == null || query.From <= e.Date) &&
 					(query.To == null || query.To >= e.Date) &&
 					e.Event == EventLog.EventType.MURDER
-				group e.Id by p.Id into g
+				group e.Id by e.EnemyPlayerId into g
 				select new
 				{
-					Id = g.Key,
+					Id = g.Key.Value,
 					Kills = g.Count(),
 				}).ToArrayAsync(cancellationToken);
 
