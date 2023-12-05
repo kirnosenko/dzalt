@@ -67,7 +67,10 @@ namespace DZALT.Entities.Selection.LongestShots
 				}).ToArrayAsync(cancellationToken);
 
 			return playerShots
-				.Where(x => query.Bodyparts.Any(bp => x.BodyPart.StartsWith(bp)))
+				.Where(x =>
+					query.Bodyparts == null ||
+					query.Bodyparts.Length == 0 ||
+					query.Bodyparts.Any(bp => x.BodyPart.StartsWith(bp)))
 				.Select(x => new LongestShotsResult()
 				{
 					Date = x.Date,
