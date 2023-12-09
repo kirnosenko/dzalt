@@ -23,7 +23,11 @@ namespace DZALT.Web
 
 		public void ConfigureServices(IServiceCollection services)
 		{
-			services.AddControllers();
+			services.AddControllers(options =>
+			{
+				options.Filters.Add<UnhandledExceptionFilter>();
+			});
+
 			services.AddMediatR(c =>
 			{
 				c.RegisterServicesFromAssembly(typeof(IDataStore).Assembly);

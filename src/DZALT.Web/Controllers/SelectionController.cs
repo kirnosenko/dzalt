@@ -5,6 +5,7 @@ using Asp.Versioning;
 using Microsoft.AspNetCore.Mvc;
 using MediatR;
 using DZALT.Entities.Selection.KillsByPlayer;
+using DZALT.Entities.Selection.KillsPerHourByPlayer;
 using DZALT.Entities.Selection.LongestShots;
 using DZALT.Entities.Selection.NamesByPlayer;
 using DZALT.Entities.Selection.PlayerLog;
@@ -36,6 +37,20 @@ namespace DZALT.Web.Controllers
 		{
 			var data = await mediator.Send(
 				KillsByPlayerQuery.Create(from, to),
+				cancellationToken);
+
+			return Ok(data);
+		}
+
+		[HttpGet]
+		[Route("[action]")]
+		public async Task<IActionResult> KillsPerHourByPlayer(
+			[FromQuery] DateTime? from,
+			[FromQuery] DateTime? to,
+			CancellationToken cancellationToken)
+		{
+			var data = await mediator.Send(
+				KillsPerHourByPlayerQuery.Create(from, to),
 				cancellationToken);
 
 			return Ok(data);
