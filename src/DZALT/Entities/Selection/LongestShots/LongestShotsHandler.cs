@@ -29,24 +29,6 @@ namespace DZALT.Entities.Selection.LongestShots
 				NamesByPlayerQuery.Instance,
 				cancellationToken);
 
-			var xxx = await (
-				from e in repository.Get<EventLog>()
-				where
-					(query.From == null || query.From <= e.Date) &&
-					(query.To == null || query.To >= e.Date) &&
-					e.Event == EventLog.EventType.HIT &&
-					e.EnemyPlayerId != null &&
-					e.Distance != null
-				select new
-				{
-					e.Date,
-					e.PlayerId,
-					e.EnemyPlayerId,
-					e.Weapon,
-					e.BodyPart,
-					e.Distance,
-				}).ToArrayAsync(cancellationToken);
-
 			var playerShots = await (
 				from e in repository.Get<EventLog>()
 				where
