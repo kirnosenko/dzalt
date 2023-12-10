@@ -57,9 +57,11 @@ namespace DZALT.Entities.Selection.PlayerLog
 			var eventsLogs = events.Select(e =>
 			{
 				string victum = e.PlayerId == playerId ? playerName : playerNicknames[e.PlayerId];
+				string victumPos = $"<{(int)e.X},{(int)e.Y},{(int)e.Z}>";
 				string attacker = e.EnemyPlayerId == playerId ? playerName : playerNicknames[e.EnemyPlayerId.Value];
+				string attackerPos = $"<{(int)e.EnemyPlayerX},{(int)e.EnemyPlayerY},{(int)e.EnemyPlayerZ}>";
 				var distance = e.Distance == null ? "." : $" from {e.Distance} meters.";
-				var log = $"{victum} killed by {attacker} with {e.Weapon}{distance}";
+				var log = $"{victum} {victumPos} killed by {attacker} {attackerPos} with {e.Weapon}{distance}";
 
 				return (e.Date, log);
 			}).ToArray();
