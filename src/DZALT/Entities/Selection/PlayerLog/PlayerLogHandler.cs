@@ -8,7 +8,7 @@ using DZALT.Entities.Selection.NamesByPlayer;
 
 namespace DZALT.Entities.Selection.PlayerLog
 {
-	public record PlayerLogHandler : IRequestHandler<PlayerLogQuery, string[]>
+	public record PlayerLogHandler : IRequestHandler<PlayerLogQuery, PlayerLog[]>
 	{
 		private readonly IMediator mediator;
 		private readonly IRepository repository;
@@ -21,7 +21,7 @@ namespace DZALT.Entities.Selection.PlayerLog
 			this.repository = repository;
 		}
 
-		public async Task<string[]> Handle(
+		public async Task<PlayerLog[]> Handle(
 			PlayerLogQuery query,
 			CancellationToken cancellationToken)
 		{
@@ -41,34 +41,60 @@ namespace DZALT.Entities.Selection.PlayerLog
 			var sessions = await repository.Get<SessionLog>()
 				.Where(x => x.PlayerId == playerId)
 				.ToArrayAsync(cancellationToken);
-			var events = await repository.Get<EventLog>()
-				.Where(x =>
-					x.EnemyPlayer != null && x.Event == EventLog.EventType.MURDER &&
-					(x.PlayerId == playerId || x.EnemyPlayerId == playerId))
-				.ToArrayAsync(cancellationToken);
+			var events = await (
+				from murder in repository.Get<EventLog>()
+					.Where(x =>
+						x.EnemyPlayerId != null &&
+						x.Event == EventLog.EventType.MURDER &&
+						(x.PlayerId == playerId || x.EnemyPlayerId == playerId))
+				from hit in repository.Get<EventLog>()
+					.Where(x => 
+						x.PlayerId == murder.PlayerId &&
+						x.EnemyPlayerId == murder.EnemyPlayerId &&
+						x.Event == EventLog.EventType.HIT &&
+						x.Date <= murder.Date)
+					.OrderByDescending(x => x.Date)
+					.Take(1)
+				select new
+				{
+					murder.Date,
+					murder.PlayerId,
+					murder.X,
+					murder.Y,
+					murder.Z,
+					murder.EnemyPlayerId,
+					murder.EnemyPlayerX,
+					murder.EnemyPlayerY,
+					murder.EnemyPlayerZ,
+					murder.Distance,
+					murder.Weapon,
+					hit.BodyPart,
 
-			var sessionsLogs = sessions.Select(s =>
-			{
-				var log = s.Type == SessionLog.SessionType.CONNECTED
-					? $"{playerName} connected."
-					: $"{playerName} disconnected.";
-				return (s.Date, log);
-			}).ToArray();
-			var eventsLogs = events.Select(e =>
-			{
-				string victum = e.PlayerId == playerId ? playerName : playerNicknames[e.PlayerId];
-				string victumPos = $"<{(int)e.X},{(int)e.Y},{(int)e.Z}>";
-				string attacker = e.EnemyPlayerId == playerId ? playerName : playerNicknames[e.EnemyPlayerId.Value];
-				string attackerPos = $"<{(int)e.EnemyPlayerX},{(int)e.EnemyPlayerY},{(int)e.EnemyPlayerZ}>";
-				var distance = e.Distance == null ? "." : $" from {e.Distance} meters.";
-				var log = $"{victum} {victumPos} killed by {attacker} {attackerPos} with {e.Weapon}{distance}";
+				}).ToArrayAsync(cancellationToken);
 
-				return (e.Date, log);
-			}).ToArray();
+			var sessionsLogs = sessions
+				.Select<SessionLog, PlayerLog>(s => s.Type == SessionLog.SessionType.CONNECTED
+					? PlayerConnectedLog.Create(s.Date, playerName)
+					: PlayerDisconnectedLog.Create(s.Date, playerName))
+				.ToArray();
+			var eventsLogs = events
+				.Select(e => PlayerKilledLog.Create(
+					e.Date,
+					e.PlayerId == playerId ? playerName : playerNicknames[e.PlayerId],
+					(int)e.X,
+					(int)e.Y,
+					(int)e.Z,
+					e.EnemyPlayerId == playerId ? playerName : playerNicknames[e.EnemyPlayerId.Value],
+					(int)e.EnemyPlayerX,
+					(int)e.EnemyPlayerY,
+					(int)e.EnemyPlayerZ,
+					e.Weapon,
+					e.Distance.HasValue ? (int)e.Distance.Value : null,
+					e.BodyPart))
+				.ToArray();
 
 			return sessionsLogs.Concat(eventsLogs)
 				.OrderBy(x => x.Date)
-				.Select(x => $"{x.Date}: {x.log}")
 				.ToArray();
 		}
 	}

@@ -12,6 +12,7 @@ using DZALT.Entities.Selection.PlayerLog;
 using DZALT.Entities.Selection.PlayerNames;
 using DZALT.Entities.Selection.PlayTimeByPlayer;
 using DZALT.Entities.Selection.PlayTimeIntersection;
+using System.Linq;
 
 namespace DZALT.Web.Controllers
 {
@@ -93,7 +94,7 @@ namespace DZALT.Web.Controllers
 				PlayerLogQuery.Create(nickname),
 				cancellationToken);
 
-			return Ok(data);
+			return Ok(data.Select(x => x.ToString()));
 		}
 
 		[HttpGet]
