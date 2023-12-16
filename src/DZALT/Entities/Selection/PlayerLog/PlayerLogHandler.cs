@@ -38,10 +38,17 @@ namespace DZALT.Entities.Selection.PlayerLog
 				NamesByPlayerQuery.Instance,
 				cancellationToken);
 
-			var sessions = await repository.Get<SessionLog>()
-				.Where(x => x.PlayerId == playerId)
-				.ToArrayAsync(cancellationToken);
-			var events = await (
+			var sessions = !query.IncludeSessions ? null :
+				await repository.Get<SessionLog>()
+					.Where(x => x.PlayerId == playerId)
+					.ToArrayAsync(cancellationToken);
+			var sessionsLogs = sessions
+				?.Select<SessionLog, PlayerLog>(s => s.Type == SessionLog.SessionType.CONNECTED
+					? PlayerConnectedLog.Create(s.Date, playerName)
+					: PlayerDisconnectedLog.Create(s.Date, playerName))
+				?.ToArray() ?? Array.Empty<PlayerLog>();
+
+			var kills = !query.IncludeKills ? null : await (
 				from murder in repository.Get<EventLog>()
 					.Where(x =>
 						x.EnemyPlayerId != null &&
@@ -71,14 +78,8 @@ namespace DZALT.Entities.Selection.PlayerLog
 					hit.BodyPart,
 
 				}).ToArrayAsync(cancellationToken);
-
-			var sessionsLogs = sessions
-				.Select<SessionLog, PlayerLog>(s => s.Type == SessionLog.SessionType.CONNECTED
-					? PlayerConnectedLog.Create(s.Date, playerName)
-					: PlayerDisconnectedLog.Create(s.Date, playerName))
-				.ToArray();
-			var eventsLogs = events
-				.Select(e => PlayerKilledLog.Create(
+			var killsLogs = kills
+				?.Select(e => PlayerKilledLog.Create(
 					e.Date,
 					e.PlayerId == playerId ? playerName : playerNicknames[e.PlayerId],
 					(int)e.X,
@@ -91,9 +92,41 @@ namespace DZALT.Entities.Selection.PlayerLog
 					e.Weapon,
 					e.Distance.HasValue ? (int)e.Distance.Value : null,
 					e.BodyPart))
-				.ToArray();
+				?.ToArray() ?? Array.Empty<PlayerLog>();
 
-			return sessionsLogs.Concat(eventsLogs)
+			var suicides = !query.IncludeSuicides ? null :
+				await repository.Get<EventLog>()
+					.Where(x => x.PlayerId == playerId && x.Event == EventLog.EventType.SUICIDE)
+					.ToArrayAsync(cancellationToken);
+			var suicidesLogs = suicides
+				?.Select<EventLog, PlayerLog>(s => 
+					PlayerSuicideLog.Create(
+						s.Date,
+						playerName,
+						(int)s.X,
+						(int)s.Y,
+						(int)s.Z))
+				?.ToArray() ?? Array.Empty<PlayerLog>();
+
+			var accidents = !query.IncludeAccidents ? null :
+				await repository.Get<EventLog>()
+					.Where(x => x.PlayerId == playerId && x.Event == EventLog.EventType.ACCIDENT)
+					.ToArrayAsync(cancellationToken);
+			var accidentsLogs = accidents
+				?.Select<EventLog, PlayerLog>(s =>
+					PlayerAccidentLog.Create(
+						s.Date,
+						playerName,
+						(int)s.X,
+						(int)s.Y,
+						(int)s.Z,
+						s.Enemy))
+				?.ToArray() ?? Array.Empty<PlayerLog>();
+
+			return sessionsLogs
+				.Concat(killsLogs)
+				.Concat(suicidesLogs)
+				.Concat(accidentsLogs)
 				.OrderBy(x => x.Date)
 				.ToArray();
 		}

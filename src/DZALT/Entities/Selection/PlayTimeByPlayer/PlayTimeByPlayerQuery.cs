@@ -12,12 +12,9 @@ namespace DZALT.Entities.Selection.PlayTimeByPlayer
 		public DateTime? From { get; set; }
 		public DateTime? To { get; set; }
 
-		public static PlayTimeByPlayerQuery Create()
-			=> Create(null, null);
-
 		public static PlayTimeByPlayerQuery Create(
-			DateTime? from,
-			DateTime? to)
+			DateTime? from = null,
+			DateTime? to = null)
 			=> new PlayTimeByPlayerQuery()
 			{
 				From = from,

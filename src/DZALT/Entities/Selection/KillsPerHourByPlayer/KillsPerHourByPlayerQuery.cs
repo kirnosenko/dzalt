@@ -12,12 +12,9 @@ namespace DZALT.Entities.Selection.KillsPerHourByPlayer
 		public DateTime? From { get; set; }
 		public DateTime? To { get; set; }
 
-		public static KillsPerHourByPlayerQuery Create()
-			=> Create(null, null);
-
 		public static KillsPerHourByPlayerQuery Create(
-			DateTime? from,
-			DateTime? to)
+			DateTime? from = null,
+			DateTime? to = null)
 			=> new KillsPerHourByPlayerQuery()
 			{
 				From = from,

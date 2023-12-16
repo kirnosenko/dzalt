@@ -13,11 +13,8 @@ namespace DZALT.Entities.Selection.LongestShots
 		public DateTime? From { get; set; }
 		public DateTime? To { get; set; }
 
-		public static LongestShotsQuery Create()
-			=> Create(null, null, null);
-
 		public static LongestShotsQuery Create(
-			string[] bodyparts,
+			string[] bodyparts = null,
 			DateTime? from = null,
 			DateTime? to = null)
 			=> new LongestShotsQuery()

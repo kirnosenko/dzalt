@@ -10,8 +10,10 @@ using DZALT.Entities.Selection.LongestShots;
 using DZALT.Entities.Selection.NamesByPlayer;
 using DZALT.Entities.Selection.PlayerLog;
 using DZALT.Entities.Selection.PlayerNames;
+using DZALT.Entities.Selection.PlayerRawEvents;
 using DZALT.Entities.Selection.PlayTimeByPlayer;
 using DZALT.Entities.Selection.PlayTimeIntersection;
+using DZALT.Entities.Selection.TimeTillFirstKill;
 using System.Linq;
 
 namespace DZALT.Web.Controllers
@@ -88,10 +90,19 @@ namespace DZALT.Web.Controllers
 		[Route("[action]")]
 		public async Task<IActionResult> PlayerLog(
 			[FromQuery] string nickname,
+			[FromQuery] bool includeSessions,
+			[FromQuery] bool includeKills,
+			[FromQuery] bool includeSuicides,
+			[FromQuery] bool includeAccidents,
 			CancellationToken cancellationToken)
 		{
 			var data = await mediator.Send(
-				PlayerLogQuery.Create(nickname),
+				PlayerLogQuery.Create(
+					nickname,
+					includeSessions,
+					includeKills,
+					includeSuicides,
+					includeAccidents),
 				cancellationToken);
 
 			return Ok(data.Select(x => x.ToString()));
@@ -105,6 +116,19 @@ namespace DZALT.Web.Controllers
 		{
 			var data = await mediator.Send(
 				PlayerNamesQuery.Create(nickname),
+				cancellationToken);
+
+			return Ok(data);
+		}
+
+		[HttpGet]
+		[Route("[action]")]
+		public async Task<IActionResult> PlayerRawEvents(
+			[FromQuery] string nickname,
+			CancellationToken cancellationToken)
+		{
+			var data = await mediator.Send(
+				PlayerRawEventsQuery.Create(nickname),
 				cancellationToken);
 
 			return Ok(data);
@@ -135,6 +159,20 @@ namespace DZALT.Web.Controllers
 		{
 			var data = await mediator.Send(
 				PlayTimeIntersectionQuery.Create(player1, player2, from, to),
+				cancellationToken);
+
+			return Ok(data);
+		}
+
+		[HttpGet]
+		[Route("[action]")]
+		public async Task<IActionResult> TimeTillFirstKill(
+			[FromQuery] DateTime? from,
+			[FromQuery] DateTime? to,
+			CancellationToken cancellationToken)
+		{
+			var data = await mediator.Send(
+				TimeTillFirstKillQuery.Create(from, to),
 				cancellationToken);
 
 			return Ok(data);

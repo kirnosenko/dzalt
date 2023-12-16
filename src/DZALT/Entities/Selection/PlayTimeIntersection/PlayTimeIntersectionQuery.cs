@@ -17,8 +17,8 @@ namespace DZALT.Entities.Selection.PlayTimeIntersection
 		public static PlayTimeIntersectionQuery Create(
 			string p1NickOrGuid,
 			string p2NickOrGuid,
-			DateTime? from,
-			DateTime? to)
+			DateTime? from = null,
+			DateTime? to = null)
 			=> new PlayTimeIntersectionQuery()
 			{
 				P1NickOrGuid = p1NickOrGuid,

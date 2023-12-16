@@ -12,12 +12,9 @@ namespace DZALT.Entities.Selection.KillsByPlayer
 		public DateTime? From { get; set; }
 		public DateTime? To { get; set; }
 
-		public static KillsByPlayerQuery Create()
-			=> Create(null, null);
-
 		public static KillsByPlayerQuery Create(
-			DateTime? from,
-			DateTime? to)
+			DateTime? from = null,
+			DateTime? to = null)
 			=> new KillsByPlayerQuery()
 			{
 				From = from,
