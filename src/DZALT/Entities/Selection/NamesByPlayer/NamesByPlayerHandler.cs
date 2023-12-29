@@ -24,6 +24,7 @@ namespace DZALT.Entities.Selection.NamesByPlayer
 				from p in repository.Get<Player>()
 				let name = repository.Get<Nickname>()
 					.Where(x => x.PlayerId == p.Id)
+					.OrderByDescending(x => x.Id)
 					.Select(x => x.Name)
 					.FirstOrDefault()
 				select new
@@ -31,7 +32,7 @@ namespace DZALT.Entities.Selection.NamesByPlayer
 					Id = p.Id,
 					Guid = p.Guid,
 					Name = name,
-				}).ToDictionaryAsync(x => x.Id, x => x.Name ?? x.Guid, cancellationToken);
+				}).ToDictionaryAsync(x => x.Id, x => Helpers.FormatPlayerName(x.Guid, x.Name), cancellationToken);
 
 			return playerNicknames;
 		}

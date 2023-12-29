@@ -1,6 +1,4 @@
-﻿using System;
-using System.Linq;
-using System.Threading.Tasks;
+﻿using System.Threading.Tasks;
 using FluentAssertions;
 using Xunit;
 
@@ -16,7 +14,7 @@ namespace DZALT.Entities.Selection.NamesByPlayer
 		}
 
 		[Fact]
-		public async Task ShouldGetNicknameForPlayer()
+		public async Task ShouldGetNicknameAndGuidForPlayer()
 		{
 			var player = new Player()
 			{
@@ -34,7 +32,8 @@ namespace DZALT.Entities.Selection.NamesByPlayer
 			var result = await handler.Handle(
 				NamesByPlayerQuery.Instance, default);
 
-			result[player.Id].Should().Be(nickname.Name);
+			result[player.Id].Should().Be(
+				Helpers.FormatPlayerName(player.Guid, nickname.Name));
 		}
 
 		[Fact]
@@ -50,7 +49,38 @@ namespace DZALT.Entities.Selection.NamesByPlayer
 			var result = await handler.Handle(
 				NamesByPlayerQuery.Instance, default);
 
-			result[player.Id].Should().Be(player.Guid);
+			result[player.Id].Should().Be(
+				Helpers.FormatPlayerName(player.Guid));
+		}
+
+		[Fact]
+		public async Task ShouldGetTheLastNicknameForPlayer()
+		{
+			var player = new Player()
+			{
+				Guid = "aaa=",
+			};
+			var nickname = new Nickname()
+			{
+				Name = "aaa",
+				Player = player,
+			};
+			Add(player);
+			Add(nickname);
+			await SubmitChanges();
+			var nickname2 = new Nickname()
+			{
+				Name = "bbb",
+				Player = player,
+			};
+			Add(nickname2);
+			await SubmitChanges();
+
+			var result = await handler.Handle(
+				NamesByPlayerQuery.Instance, default);
+
+			result[player.Id].Should().Be(
+				Helpers.FormatPlayerName(player.Guid, nickname2.Name));
 		}
 	}
 }
