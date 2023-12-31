@@ -14,6 +14,7 @@ using DZALT.Entities.Selection.PlayerRawEvents;
 using DZALT.Entities.Selection.PlayTimeByPlayer;
 using DZALT.Entities.Selection.PlayTimeIntersection;
 using DZALT.Entities.Selection.TimeTillFirstKill;
+using DZALT.Entities.Selection.TouchedPlayers;
 using System.Linq;
 
 namespace DZALT.Web.Controllers
@@ -173,6 +174,20 @@ namespace DZALT.Web.Controllers
 		{
 			var data = await mediator.Send(
 				TimeTillFirstKillQuery.Create(from, to),
+				cancellationToken);
+
+			return Ok(data);
+		}
+
+		[HttpGet]
+		[Route("[action]")]
+		public async Task<IActionResult> TouchedPlayers(
+			[FromQuery] DateTime? from,
+			[FromQuery] DateTime? to,
+			CancellationToken cancellationToken)
+		{
+			var data = await mediator.Send(
+				TouchedPlayersQuery.Create(from, to),
 				cancellationToken);
 
 			return Ok(data);
