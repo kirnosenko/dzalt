@@ -4,20 +4,15 @@ using System.Threading;
 using System.Threading.Tasks;
 using MediatR;
 using Microsoft.EntityFrameworkCore;
-using DZALT.Entities.Selection.NamesByPlayer;
 
 namespace DZALT.Entities.Selection.TimeTillFirstKill
 {
 	public class TimeTillFirstKillHandler : IRequestHandler<TimeTillFirstKillQuery, TimeTillFirstKillResult[]>
 	{
-		private readonly IMediator mediator;
 		private readonly IRepository repository;
 
-		public TimeTillFirstKillHandler(
-			IMediator mediator,
-			IRepository repository)
+		public TimeTillFirstKillHandler(IRepository repository)
 		{
-			this.mediator = mediator;
 			this.repository = repository;
 		}
 
@@ -25,9 +20,7 @@ namespace DZALT.Entities.Selection.TimeTillFirstKill
 			TimeTillFirstKillQuery query,
 			CancellationToken cancellationToken)
 		{
-			var playerNicknames = await mediator.Send(
-				NamesByPlayerQuery.Instance,
-				cancellationToken);
+			var playerNames = await repository.PlayersNames(cancellationToken);
 
 			var playerKills = await (
 				from kill in repository.Get<EventLog>()
@@ -58,7 +51,7 @@ namespace DZALT.Entities.Selection.TimeTillFirstKill
 			return playerKills
 				.Select(x => new TimeTillFirstKillResult()
 				{
-					Name = playerNicknames[x.Id],
+					Name = playerNames[x.Id],
 					DeathDate = x.DeathDate,
 					KillDate = x.KillDate,
 					Time = x.Time,

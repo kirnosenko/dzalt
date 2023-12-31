@@ -1,18 +1,12 @@
 ﻿using System.Threading.Tasks;
-using FluentAssertions;
+using DZALT.Entities;
 using Xunit;
+using FluentAssertions;
 
-namespace DZALT.Entities.Selection.NamesByPlayer
+namespace DZALT
 {
-	public class NamesByPlayerHandlerTest : BaseRepositoryTest
+	public class HelpersTest : BaseRepositoryTest
 	{
-		private readonly NamesByPlayerHandler handler;
-
-		public NamesByPlayerHandlerTest()
-		{
-			handler = new NamesByPlayerHandler(this);
-		}
-
 		[Fact]
 		public async Task ShouldGetNicknameAndGuidForPlayer()
 		{
@@ -29,8 +23,7 @@ namespace DZALT.Entities.Selection.NamesByPlayer
 			Add(nickname);
 			await SubmitChanges();
 
-			var result = await handler.Handle(
-				NamesByPlayerQuery.Instance, default);
+			var result = await this.PlayersNames(default);
 
 			result[player.Id].Should().Be(
 				Helpers.FormatPlayerName(player.Guid, nickname.Name));
@@ -46,8 +39,7 @@ namespace DZALT.Entities.Selection.NamesByPlayer
 			Add(player);
 			await SubmitChanges();
 
-			var result = await handler.Handle(
-				NamesByPlayerQuery.Instance, default);
+			var result = await this.PlayersNames(default);
 
 			result[player.Id].Should().Be(
 				Helpers.FormatPlayerName(player.Guid));
@@ -76,8 +68,7 @@ namespace DZALT.Entities.Selection.NamesByPlayer
 			Add(nickname2);
 			await SubmitChanges();
 
-			var result = await handler.Handle(
-				NamesByPlayerQuery.Instance, default);
+			var result = await this.PlayersNames(default);
 
 			result[player.Id].Should().Be(
 				Helpers.FormatPlayerName(player.Guid, nickname2.Name));

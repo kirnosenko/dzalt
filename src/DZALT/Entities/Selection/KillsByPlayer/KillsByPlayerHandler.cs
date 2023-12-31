@@ -4,20 +4,15 @@ using System.Threading;
 using System.Threading.Tasks;
 using MediatR;
 using Microsoft.EntityFrameworkCore;
-using DZALT.Entities.Selection.NamesByPlayer;
 
 namespace DZALT.Entities.Selection.KillsByPlayer
 {
 	public class KillsByPlayerHandler : IRequestHandler<KillsByPlayerQuery, KillsByPlayerResult[]>
 	{
-		private readonly IMediator mediator;
 		private readonly IRepository repository;
 
-		public KillsByPlayerHandler(
-			IMediator mediator,
-			IRepository repository)
+		public KillsByPlayerHandler(IRepository repository)
 		{
-			this.mediator = mediator;
 			this.repository = repository;
 		}
 
@@ -25,9 +20,7 @@ namespace DZALT.Entities.Selection.KillsByPlayer
 			KillsByPlayerQuery query,
 			CancellationToken cancellationToken)
 		{
-			var playerNicknames = await mediator.Send(
-				NamesByPlayerQuery.Instance,
-				cancellationToken);
+			var playerNames = await repository.PlayersNames(cancellationToken);
 			
 			var playerKills = await (
 				from e in repository.Get<EventLog>()
@@ -46,7 +39,7 @@ namespace DZALT.Entities.Selection.KillsByPlayer
 				.OrderByDescending(x => x.Kills)
 				.Select(x => new KillsByPlayerResult()
 				{
-					Name = playerNicknames[x.Id],
+					Name = playerNames[x.Id],
 					Kills = x.Kills,
 				}).ToArray();
 		}

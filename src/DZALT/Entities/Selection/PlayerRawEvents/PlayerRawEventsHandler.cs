@@ -4,20 +4,15 @@ using System.Threading;
 using System.Threading.Tasks;
 using MediatR;
 using Microsoft.EntityFrameworkCore;
-using DZALT.Entities.Selection.NamesByPlayer;
 
 namespace DZALT.Entities.Selection.PlayerRawEvents
 {
 	public record PlayerRawEventsHandler : IRequestHandler<PlayerRawEventsQuery, EventLog[]>
 	{
-		private readonly IMediator mediator;
 		private readonly IRepository repository;
 
-		public PlayerRawEventsHandler(
-			IMediator mediator,
-			IRepository repository)
+		public PlayerRawEventsHandler(IRepository repository)
 		{
-			this.mediator = mediator;
 			this.repository = repository;
 		}
 
@@ -25,18 +20,8 @@ namespace DZALT.Entities.Selection.PlayerRawEvents
 			PlayerRawEventsQuery query,
 			CancellationToken cancellationToken)
 		{
-			var playerName = query.PlayerNickOrGuid;
-			var playerId = await (
-				from p in repository.Get<Player>()
-				join n in repository.Get<Nickname>()
-					on p.Id equals n.PlayerId into leftjoin
-				from x in leftjoin.DefaultIfEmpty()
-				where p.Guid == playerName || x.Name == playerName
-				select p.Id).FirstOrDefaultAsync(cancellationToken);
-
-			var playerNicknames = await mediator.Send(
-				NamesByPlayerQuery.Instance,
-				cancellationToken);
+			var playerId = await repository.PlayerIdByName(query.PlayerNickOrGuid, cancellationToken);
+			var playerNames = await repository.PlayersNames(cancellationToken);
 
 			var logs = await repository.Get<EventLog>()
 				.Where(x => x.PlayerId == playerId)

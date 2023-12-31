@@ -1,25 +1,18 @@
 ﻿using System;
 using System.Linq;
 using System.Threading.Tasks;
-using MediatR;
 using FluentAssertions;
 using Xunit;
-using NSubstitute;
-using DZALT.Entities.Selection.NamesByPlayer;
-using System.Collections.Generic;
-using System.Threading;
 
 namespace DZALT.Entities.Selection.KillsByPlayer
 {
 	public class KillsByPlayerHandlerTest : BaseRepositoryTest
 	{
-		private readonly IMediator mediator;
 		private readonly KillsByPlayerHandler handler;
 
 		public KillsByPlayerHandlerTest()
 		{
-			mediator = Substitute.For<IMediator>();
-			handler = new KillsByPlayerHandler(mediator, this);
+			handler = new KillsByPlayerHandler(this);
 		}
 
 		[Fact]
@@ -75,23 +68,14 @@ namespace DZALT.Entities.Selection.KillsByPlayer
 			AddRange(logs);
 			await SubmitChanges();
 
-			mediator.Send(
-				Arg.Any<NamesByPlayerQuery>(),
-				Arg.Any<CancellationToken>())
-				.Returns(new Dictionary<int, string>()
-				{
-					{ p1.Id, p1.Guid },
-					{ p2.Id, p2.Guid },
-				});
-
 			var result = await handler.Handle(
 				KillsByPlayerQuery.Create(),
 				default);
 
 			result.Length.Should().Be(2);
-			result.Single(x => x.Name == "p1").Kills
+			result.Single(x => x.Name == Helpers.FormatPlayerName(p1.Guid)).Kills
 				.Should().Be(2);
-			result.Single(x => x.Name == "p2").Kills
+			result.Single(x => x.Name == Helpers.FormatPlayerName(p2.Guid)).Kills
 				.Should().Be(1);
 		}
 	}

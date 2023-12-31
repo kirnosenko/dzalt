@@ -4,20 +4,15 @@ using System.Threading;
 using System.Threading.Tasks;
 using MediatR;
 using Microsoft.EntityFrameworkCore;
-using DZALT.Entities.Selection.NamesByPlayer;
 
 namespace DZALT.Entities.Selection.TouchedPlayers
 {
 	public class TouchedPlayersHandler : IRequestHandler<TouchedPlayersQuery, TouchedPlayersResult[]>
 	{
-		private readonly IMediator mediator;
 		private readonly IRepository repository;
 
-		public TouchedPlayersHandler(
-			IMediator mediator,
-			IRepository repository)
+		public TouchedPlayersHandler(IRepository repository)
 		{
-			this.mediator = mediator;
 			this.repository = repository;
 		}
 
@@ -25,9 +20,7 @@ namespace DZALT.Entities.Selection.TouchedPlayers
 			TouchedPlayersQuery query,
 			CancellationToken cancellationToken)
 		{
-			var playerNicknames = await mediator.Send(
-				NamesByPlayerQuery.Instance,
-				cancellationToken);
+			var playerNames = await repository.PlayersNames(cancellationToken);
 
 			var touchedPlayers = await (
 				from e in repository.Get<EventLog>()
@@ -48,7 +41,7 @@ namespace DZALT.Entities.Selection.TouchedPlayers
 				.OrderByDescending(x => x.Touched)
 				.Select(x => new TouchedPlayersResult()
 				{
-					Name = playerNicknames[x.Id],
+					Name = playerNames[x.Id],
 					Touched = x.Touched,
 				}).ToArray();
 		}

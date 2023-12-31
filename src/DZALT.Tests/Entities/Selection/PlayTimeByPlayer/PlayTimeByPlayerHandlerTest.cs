@@ -1,25 +1,18 @@
 ﻿using System;
-using System.Collections.Generic;
 using System.Linq;
-using System.Threading;
 using System.Threading.Tasks;
 using FluentAssertions;
-using MediatR;
 using Xunit;
-using NSubstitute;
-using DZALT.Entities.Selection.NamesByPlayer;
 
 namespace DZALT.Entities.Selection.PlayTimeByPlayer
 {
 	public class PlayTimeByPlayerHandlerTest : BaseRepositoryTest
 	{
-		private readonly IMediator mediator;
 		private readonly PlayTimeByPlayerHandler handler;
 
 		public PlayTimeByPlayerHandlerTest()
 		{
-			mediator = Substitute.For<IMediator>();
-			handler = new PlayTimeByPlayerHandler(mediator, this);
+			handler = new PlayTimeByPlayerHandler(this);
 		}
 
 		[Fact]
@@ -77,23 +70,14 @@ namespace DZALT.Entities.Selection.PlayTimeByPlayer
 			AddRange(logs);
 			await SubmitChanges();
 
-			mediator.Send(
-				Arg.Any<NamesByPlayerQuery>(),
-				Arg.Any<CancellationToken>())
-				.Returns(new Dictionary<int, string>()
-				{
-					{ p1.Id, p1.Guid },
-					{ p2.Id, p2.Guid },
-				});
-
 			var result = await handler.Handle(
 				PlayTimeByPlayerQuery.Create(),
 				default);
 
 			result.Length.Should().Be(2);
-			result.Single(x => x.Name == "p1").Time
+			result.Single(x => x.Name == Helpers.FormatPlayerName(p1.Guid)).Time
 				.Should().Be(new TimeSpan(14, 00, 10));
-			result.Single(x => x.Name == "p2").Time
+			result.Single(x => x.Name == Helpers.FormatPlayerName(p2.Guid)).Time
 				.Should().Be(new TimeSpan(01, 30, 30));
 		}
 
@@ -158,20 +142,12 @@ namespace DZALT.Entities.Selection.PlayTimeByPlayer
 			AddRange(logs);
 			await SubmitChanges();
 
-			mediator.Send(
-				Arg.Any<NamesByPlayerQuery>(),
-				Arg.Any<CancellationToken>())
-				.Returns(new Dictionary<int, string>()
-				{
-					{ p1.Id, p1.Guid },
-				});
-
 			var result = await handler.Handle(
 				PlayTimeByPlayerQuery.Create(fromDate, toDate),
 				default);
 
 			result.Length.Should().Be(1);
-			result.Single(x => x.Name == "p1").Time
+			result.Single(x => x.Name == Helpers.FormatPlayerName(p1.Guid)).Time
 				.Should().Be(TimeSpan.FromHours(hours));
 		}
 	}

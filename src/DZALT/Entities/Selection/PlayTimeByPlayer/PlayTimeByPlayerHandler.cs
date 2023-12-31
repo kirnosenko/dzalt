@@ -4,20 +4,15 @@ using System.Threading;
 using System.Threading.Tasks;
 using MediatR;
 using Microsoft.EntityFrameworkCore;
-using DZALT.Entities.Selection.NamesByPlayer;
 
 namespace DZALT.Entities.Selection.PlayTimeByPlayer
 {
 	public class PlayTimeByPlayerHandler : IRequestHandler<PlayTimeByPlayerQuery, PlayTimeByPlayerResult[]>
 	{
-		private readonly IMediator mediator;
 		private readonly IRepository repository;
 
-		public PlayTimeByPlayerHandler(
-			IMediator mediator,
-			IRepository repository)
+		public PlayTimeByPlayerHandler(IRepository repository)
 		{
-			this.mediator = mediator;
 			this.repository = repository;
 		}
 
@@ -25,9 +20,7 @@ namespace DZALT.Entities.Selection.PlayTimeByPlayer
 			PlayTimeByPlayerQuery query,
 			CancellationToken cancellationToken)
 		{
-			var playerNicknames = await mediator.Send(
-				NamesByPlayerQuery.Instance,
-				cancellationToken);
+			var playerNames = await repository.PlayersNames(cancellationToken);
 
 			var playerSessions = await (
 				from sc in repository.Get<SessionLog>()
@@ -51,7 +44,7 @@ namespace DZALT.Entities.Selection.PlayTimeByPlayer
 				group (query.To != null && query.To < ps.To ? query.To.Value : ps.To).Ticks - (query.From != null && query.From > ps.From ? query.From.Value : ps.From).Ticks by ps.Id into g
 				select new PlayTimeByPlayerResult()
 				{
-					Name = playerNicknames[g.Key],
+					Name = playerNames[g.Key],
 					Time = TimeSpan.FromTicks(g.Sum())
 				};
 

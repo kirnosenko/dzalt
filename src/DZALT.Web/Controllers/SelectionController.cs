@@ -7,7 +7,6 @@ using MediatR;
 using DZALT.Entities.Selection.KillsByPlayer;
 using DZALT.Entities.Selection.KillsPerHourByPlayer;
 using DZALT.Entities.Selection.LongestShots;
-using DZALT.Entities.Selection.NamesByPlayer;
 using DZALT.Entities.Selection.PlayerLog;
 using DZALT.Entities.Selection.PlayerNames;
 using DZALT.Entities.Selection.PlayerRawEvents;
@@ -70,18 +69,6 @@ namespace DZALT.Web.Controllers
 		{
 			var data = await mediator.Send(
 				LongestShotsQuery.Create(bodyparts, from, to),
-				cancellationToken);
-
-			return Ok(data);
-		}
-
-		[HttpGet]
-		[Route("[action]")]
-		public async Task<IActionResult> NamesByPlayer(
-			CancellationToken cancellationToken)
-		{
-			var data = await mediator.Send(
-				NamesByPlayerQuery.Instance,
 				cancellationToken);
 
 			return Ok(data);

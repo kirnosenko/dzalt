@@ -1,4 +1,11 @@
-﻿namespace DZALT
+﻿using System.Linq;
+using System.Threading;
+using System.Threading.Tasks;
+using Microsoft.EntityFrameworkCore;
+using DZALT.Entities;
+using System.Collections.Generic;
+
+namespace DZALT
 {
 	public static class Helpers
 	{
@@ -10,6 +17,46 @@
 				: "";
 
 			return $"{nickname}({guid})";
+		}
+
+		public static async Task<int> PlayerIdByName(
+			this IRepository repository,
+			string name,
+			CancellationToken cancellationToken)
+		{
+			var playerId = await(
+				from p in repository.Get<Player>()
+				join n in repository.Get<Nickname>()
+					on p.Id equals n.PlayerId into leftjoin
+				from x in leftjoin.DefaultIfEmpty()
+				where
+					x.Name == name ||
+					p.Guid == name ||
+					p.Guid.EndsWith(name)
+				select p.Id).FirstOrDefaultAsync(cancellationToken);
+
+			return playerId;
+		}
+
+		public static async Task<IDictionary<int, string>> PlayersNames(
+			this IRepository repository,
+			CancellationToken cancellationToken)
+		{
+			var playerNicknames = await (
+				from p in repository.Get<Player>()
+				let name = repository.Get<Nickname>()
+					.Where(x => x.PlayerId == p.Id)
+					.OrderByDescending(x => x.Id)
+					.Select(x => x.Name)
+					.FirstOrDefault()
+				select new
+				{
+					Id = p.Id,
+					Guid = p.Guid,
+					Name = name,
+				}).ToDictionaryAsync(x => x.Id, x => Helpers.FormatPlayerName(x.Guid, x.Name), cancellationToken);
+
+			return playerNicknames;
 		}
 	}
 }

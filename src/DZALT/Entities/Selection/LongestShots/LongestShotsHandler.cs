@@ -4,20 +4,15 @@ using System.Threading;
 using System.Threading.Tasks;
 using MediatR;
 using Microsoft.EntityFrameworkCore;
-using DZALT.Entities.Selection.NamesByPlayer;
 
 namespace DZALT.Entities.Selection.LongestShots
 {
 	public class LongestShotsHandler : IRequestHandler<LongestShotsQuery, LongestShotsResult[]>
 	{
-		private readonly IMediator mediator;
 		private readonly IRepository repository;
 
-		public LongestShotsHandler(
-			IMediator mediator,
-			IRepository repository)
+		public LongestShotsHandler(IRepository repository)
 		{
-			this.mediator = mediator;
 			this.repository = repository;
 		}
 
@@ -25,9 +20,7 @@ namespace DZALT.Entities.Selection.LongestShots
 			LongestShotsQuery query,
 			CancellationToken cancellationToken)
 		{
-			var playerNicknames = await mediator.Send(
-				NamesByPlayerQuery.Instance,
-				cancellationToken);
+			var playerNames = await repository.PlayersNames(cancellationToken);
 
 			var playerShots = await (
 				from e in repository.Get<EventLog>()
@@ -56,8 +49,8 @@ namespace DZALT.Entities.Selection.LongestShots
 				.Select(x => new LongestShotsResult()
 				{
 					Date = x.Date,
-					Attacker = playerNicknames[x.EnemyPlayerId.Value],
-					Victim = playerNicknames[x.PlayerId],
+					Attacker = playerNames[x.EnemyPlayerId.Value],
+					Victim = playerNames[x.PlayerId],
 					Weapon = x.Weapon,
 					Bodypart = x.BodyPart,
 					Distance = x.Distance.Value,

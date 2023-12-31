@@ -4,20 +4,15 @@ using System.Threading;
 using System.Threading.Tasks;
 using MediatR;
 using Microsoft.EntityFrameworkCore;
-using DZALT.Entities.Selection.NamesByPlayer;
 
 namespace DZALT.Entities.Selection.PlayerLog
 {
 	public record PlayerLogHandler : IRequestHandler<PlayerLogQuery, PlayerLog[]>
 	{
-		private readonly IMediator mediator;
 		private readonly IRepository repository;
 
-		public PlayerLogHandler(
-			IMediator mediator,
-			IRepository repository)
+		public PlayerLogHandler(IRepository repository)
 		{
-			this.mediator = mediator;
 			this.repository = repository;
 		}
 
@@ -26,17 +21,8 @@ namespace DZALT.Entities.Selection.PlayerLog
 			CancellationToken cancellationToken)
 		{
 			var playerName = query.PlayerNickOrGuid;
-			var playerId = await (
-				from p in repository.Get<Player>()
-				join n in repository.Get<Nickname>()
-					on p.Id equals n.PlayerId into leftjoin
-				from x in leftjoin.DefaultIfEmpty()
-				where p.Guid == playerName || x.Name == playerName
-				select p.Id).FirstOrDefaultAsync(cancellationToken);
-
-			var playerNicknames = await mediator.Send(
-				NamesByPlayerQuery.Instance,
-				cancellationToken);
+			var playerId = await repository.PlayerIdByName(playerName, cancellationToken);
+			var playerNames = await repository.PlayersNames(cancellationToken);
 
 			var sessions = !query.IncludeSessions ? null :
 				await repository.Get<SessionLog>()
@@ -81,11 +67,11 @@ namespace DZALT.Entities.Selection.PlayerLog
 			var killsLogs = kills
 				?.Select(e => PlayerKilledLog.Create(
 					e.Date,
-					e.PlayerId == playerId ? playerName : playerNicknames[e.PlayerId],
+					e.PlayerId == playerId ? playerName : playerNames[e.PlayerId],
 					(int)e.X,
 					(int)e.Y,
 					(int)e.Z,
-					e.EnemyPlayerId == playerId ? playerName : playerNicknames[e.EnemyPlayerId.Value],
+					e.EnemyPlayerId == playerId ? playerName : playerNames[e.EnemyPlayerId.Value],
 					(int)e.EnemyPlayerX,
 					(int)e.EnemyPlayerY,
 					(int)e.EnemyPlayerZ,
