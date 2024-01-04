@@ -20,21 +20,9 @@ namespace DZALT.Entities.Selection.PlayTimeIntersection
 			PlayTimeIntersectionQuery query,
 			CancellationToken cancellationToken)
 		{
-			var player1Id = await (
-				from p in repository.Get<Player>()
-				join n in repository.Get<Nickname>()
-					on p.Id equals n.PlayerId into leftjoin
-				from x in leftjoin.DefaultIfEmpty()
-				where p.Guid == query.P1NickOrGuid || x.Name == query.P1NickOrGuid
-				select p.Id).FirstOrDefaultAsync(cancellationToken);
-			var player2Id = await (
-				from p in repository.Get<Player>()
-				join n in repository.Get<Nickname>()
-					on p.Id equals n.PlayerId into leftjoin
-				from x in leftjoin.DefaultIfEmpty()
-				where p.Guid == query.P2NickOrGuid || x.Name == query.P2NickOrGuid
-				select p.Id).FirstOrDefaultAsync(cancellationToken);
-
+			var player1Id = await repository.PlayerIdByName(query.P1NickOrGuid, cancellationToken);
+			var player2Id = await repository.PlayerIdByName(query.P2NickOrGuid, cancellationToken);
+			
 			var playerSessions = await (
 				from sc in repository.Get<SessionLog>()
 					.Where(x => x.Type == SessionLog.SessionType.CONNECTED)
