@@ -62,7 +62,6 @@ namespace DZALT.Entities.Selection.PlayerLog
 					murder.Distance,
 					murder.Weapon,
 					hit.BodyPart,
-
 				}).ToArrayAsync(cancellationToken);
 			var killsLogs = kills
 				?.Select(e => PlayerKilledLog.Create(

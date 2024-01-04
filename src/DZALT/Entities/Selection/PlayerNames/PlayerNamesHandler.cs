@@ -21,20 +21,18 @@ namespace DZALT.Entities.Selection.PlayerNames
 			CancellationToken cancellationToken)
 		{
 			var playerName = query.PlayerNickOrGuid;
-			var player = await (
-				from p in repository.Get<Player>()
-				join n in repository.Get<Nickname>()
-					on p.Id equals n.PlayerId into leftjoin
-				from x in leftjoin.DefaultIfEmpty()
-				where p.Guid == playerName || x.Name == playerName
-				select p).FirstOrDefaultAsync(cancellationToken);
+			var playerId = await repository.PlayerIdByName(playerName, cancellationToken);
+			var playerGuid = await repository.Get<Player>()
+				.Where(x => x.Id == playerId)
+				.Select(x => x.Guid)
+				.FirstOrDefaultAsync(cancellationToken);
 
 			var nicknames = await repository.Get<Nickname>()
-				.Where(x => x.PlayerId == player.Id)
+				.Where(x => x.PlayerId == playerId)
 				.Select(x => x.Name)
 				.ToArrayAsync(cancellationToken);
 
-			return new string[] { player.Guid }.Concat(nicknames).ToArray();
+			return new string[] { playerGuid }.Concat(nicknames).ToArray();
 		}
 	}
 }
