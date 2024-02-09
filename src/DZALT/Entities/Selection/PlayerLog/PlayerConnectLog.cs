@@ -2,9 +2,9 @@
 
 namespace DZALT.Entities.Selection.PlayerLog
 {
-	public record PlayerConnectedLog : PlayerLog
+	public record PlayerConnectLog : PlayerLog
 	{
-		private PlayerConnectedLog()
+		private PlayerConnectLog()
 		{
 		}
 
@@ -13,10 +13,10 @@ namespace DZALT.Entities.Selection.PlayerLog
 			return $"{Date}: {Player} connected.";
 		}
 
-		public static PlayerConnectedLog Create(
+		public static PlayerConnectLog Create(
 			DateTime date,
 			string player)
-			=> new PlayerConnectedLog()
+			=> new PlayerConnectLog()
 			{
 				Date = date,
 				Player = player,

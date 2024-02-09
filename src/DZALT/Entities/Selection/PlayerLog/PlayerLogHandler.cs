@@ -30,8 +30,45 @@ namespace DZALT.Entities.Selection.PlayerLog
 					.ToArrayAsync(cancellationToken);
 			var sessionsLogs = sessions
 				?.Select<SessionLog, PlayerLog>(s => s.Type == SessionLog.SessionType.CONNECTED
-					? PlayerConnectedLog.Create(s.Date, playerName)
-					: PlayerDisconnectedLog.Create(s.Date, playerName))
+					? PlayerConnectLog.Create(s.Date, playerName)
+					: PlayerDisconnectLog.Create(s.Date, playerName))
+				?.ToArray() ?? Array.Empty<PlayerLog>();
+
+			var hits = !query.IncludeHits ? null : await (
+				from hit in repository.Get<EventLog>()	
+				where
+					hit.EnemyPlayerId != null &&
+					hit.Event == EventLog.EventType.HIT &&
+					(hit.PlayerId == playerId || hit.EnemyPlayerId == playerId)
+				select new
+				{
+					hit.Date,
+					hit.PlayerId,
+					hit.X,
+					hit.Y,
+					hit.Z,
+					hit.EnemyPlayerId,
+					hit.EnemyPlayerX,
+					hit.EnemyPlayerY,
+					hit.EnemyPlayerZ,
+					hit.Distance,
+					hit.Weapon,
+					hit.BodyPart,
+				}).ToArrayAsync(cancellationToken);
+			var hitsLogs = hits
+				?.Select(e => PlayerHitLog.Create(
+					e.Date,
+					e.PlayerId == playerId ? playerName : playerNames[e.PlayerId],
+					(int)e.X,
+					(int)e.Y,
+					(int)e.Z,
+					e.EnemyPlayerId == playerId ? playerName : playerNames[e.EnemyPlayerId.Value],
+					(int)e.EnemyPlayerX,
+					(int)e.EnemyPlayerY,
+					(int)e.EnemyPlayerZ,
+					e.Weapon,
+					e.Distance.HasValue ? (int)e.Distance.Value : null,
+					e.BodyPart))
 				?.ToArray() ?? Array.Empty<PlayerLog>();
 
 			var kills = !query.IncludeKills ? null : await (
@@ -64,7 +101,7 @@ namespace DZALT.Entities.Selection.PlayerLog
 					hit.BodyPart,
 				}).ToArrayAsync(cancellationToken);
 			var killsLogs = kills
-				?.Select(e => PlayerKilledLog.Create(
+				?.Select(e => PlayerKillLog.Create(
 					e.Date,
 					e.PlayerId == playerId ? playerName : playerNames[e.PlayerId],
 					(int)e.X,
@@ -109,6 +146,7 @@ namespace DZALT.Entities.Selection.PlayerLog
 				?.ToArray() ?? Array.Empty<PlayerLog>();
 
 			return sessionsLogs
+				.Concat(hitsLogs)
 				.Concat(killsLogs)
 				.Concat(suicidesLogs)
 				.Concat(accidentsLogs)

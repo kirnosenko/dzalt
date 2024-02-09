@@ -10,6 +10,7 @@ namespace DZALT.Entities.Selection.PlayerLog
 
 		public string PlayerNickOrGuid { get; init; }
 		public bool IncludeSessions { get; init; }
+		public bool IncludeHits { get; init; }
 		public bool IncludeKills { get; init; }
 		public bool IncludeSuicides { get; init; }
 		public bool IncludeAccidents { get; init; }
@@ -17,6 +18,7 @@ namespace DZALT.Entities.Selection.PlayerLog
 		public static PlayerLogQuery Create(
 			string playerNickOrGuid,
 			bool includeSessions = true,
+			bool includeHits = true,
 			bool includeKills = true,
 			bool includeSuicides = true,
 			bool includeAccidents = true)
@@ -24,6 +26,7 @@ namespace DZALT.Entities.Selection.PlayerLog
 			{
 				PlayerNickOrGuid = playerNickOrGuid,
 				IncludeSessions = includeSessions,
+				IncludeHits = includeHits,
 				IncludeKills = includeKills,
 				IncludeSuicides = includeSuicides,
 				IncludeAccidents = includeAccidents,

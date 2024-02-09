@@ -79,6 +79,7 @@ namespace DZALT.Web.Controllers
 		public async Task<IActionResult> PlayerLog(
 			[FromQuery] string nickname,
 			[FromQuery] bool includeSessions,
+			[FromQuery] bool includeHits,
 			[FromQuery] bool includeKills,
 			[FromQuery] bool includeSuicides,
 			[FromQuery] bool includeAccidents,
@@ -88,6 +89,7 @@ namespace DZALT.Web.Controllers
 				PlayerLogQuery.Create(
 					nickname,
 					includeSessions,
+					includeHits,
 					includeKills,
 					includeSuicides,
 					includeAccidents),
