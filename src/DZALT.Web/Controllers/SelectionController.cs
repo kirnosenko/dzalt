@@ -10,6 +10,7 @@ using DZALT.Entities.Selection.PlayerLog;
 using DZALT.Entities.Selection.PlayerNames;
 using DZALT.Entities.Selection.PlayerRawEvents;
 using DZALT.Entities.Selection.PlayerShots;
+using DZALT.Entities.Selection.PlayersWithMultipleNames;
 using DZALT.Entities.Selection.PlayTimeByPlayer;
 using DZALT.Entities.Selection.PlayTimeIntersection;
 using DZALT.Entities.Selection.TimeTillFirstKill;
@@ -152,6 +153,20 @@ namespace DZALT.Web.Controllers
 				PlayerRawEventsQuery.Create(nickname),
 				cancellationToken);
 
+			return Ok(data);
+		}
+
+		[HttpGet]
+		[Route("[action]")]
+		public async Task<IActionResult> PlayersWithMultipleNames(
+			[FromQuery] DateTime? from,
+			[FromQuery] DateTime? to,
+			CancellationToken cancellationToken)
+		{
+			var data = await mediator.Send(
+				PlayersWithMultipleNamesQuery.Create(from, to),
+				cancellationToken);
+			
 			return Ok(data);
 		}
 

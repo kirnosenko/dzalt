@@ -15,6 +15,7 @@
 
   <ItemGroup>
     <Folder Include="Entities\Persistent\" />
+    <Folder Include="Entities\Selection\SameNamesOnMultipleAccounts\" />
   </ItemGroup>
 
 </Project>

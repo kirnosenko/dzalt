@@ -1,4 +1,5 @@
-﻿using System.Linq;
+﻿using System;
+using System.Linq;
 using System.Threading;
 using System.Threading.Tasks;
 using Microsoft.EntityFrameworkCore;
@@ -24,7 +25,7 @@ namespace DZALT
 			string name,
 			CancellationToken cancellationToken)
 		{
-			var playerId = await(
+			var playerIds = await(
 				from p in repository.Get<Player>()
 				join n in repository.Get<Nickname>()
 					on p.Id equals n.PlayerId into leftjoin
@@ -33,9 +34,14 @@ namespace DZALT
 					x.Name == name ||
 					p.Guid == name ||
 					p.Guid.EndsWith(name)
-				select p.Id).FirstOrDefaultAsync(cancellationToken);
+				select p.Id).ToArrayAsync(cancellationToken);
 
-			return playerId;
+			return playerIds.Length switch
+			{
+				0 => throw new InvalidOperationException($"No any players for name {name}."),
+				> 1 => throw new InvalidOperationException($"There are several players for name {name}."),
+				_ => playerIds[0],
+			};
 		}
 
 		public static async Task<IDictionary<int, string>> PlayersNames(

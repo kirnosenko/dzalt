@@ -25,7 +25,7 @@ namespace DZALT.Entities.Selection.PlayerNames
 			var playerGuid = await repository.Get<Player>()
 				.Where(x => x.Id == playerId)
 				.Select(x => x.Guid)
-				.FirstOrDefaultAsync(cancellationToken);
+				.SingleAsync(cancellationToken);
 
 			var nicknames = await repository.Get<Nickname>()
 				.Where(x => x.PlayerId == playerId)
