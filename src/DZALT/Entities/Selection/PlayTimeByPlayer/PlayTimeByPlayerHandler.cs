@@ -20,8 +20,6 @@ namespace DZALT.Entities.Selection.PlayTimeByPlayer
 			PlayTimeByPlayerQuery query,
 			CancellationToken cancellationToken)
 		{
-			var playerNames = await repository.PlayersNames(cancellationToken);
-
 			var playerSessions = await (
 				from sc in repository.Get<SessionLog>()
 					.Where(x => x.Type == SessionLog.SessionType.CONNECTED)
@@ -39,16 +37,16 @@ namespace DZALT.Entities.Selection.PlayTimeByPlayer
 					To = sd.Date,
 				}).ToArrayAsync(cancellationToken);
 
-			var playerTimes =
+			var playerTimes = (
 				from ps in playerSessions
 				group (query.To != null && query.To < ps.To ? query.To.Value : ps.To).Ticks - (query.From != null && query.From > ps.From ? query.From.Value : ps.From).Ticks by ps.Id into g
 				select new PlayTimeByPlayerResult()
 				{
-					Name = playerNames[g.Key],
+					PlayerId = g.Key,
 					Time = TimeSpan.FromTicks(g.Sum())
-				};
+				}).ToArray();
 
-			return playerTimes.OrderByDescending(x => x.Time).ToArray();
+			return playerTimes;
 		}
 	}
 }

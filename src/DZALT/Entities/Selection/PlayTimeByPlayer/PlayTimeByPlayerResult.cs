@@ -4,7 +4,7 @@ namespace DZALT.Entities.Selection.PlayTimeByPlayer
 {
 	public record PlayTimeByPlayerResult
 	{
-		public string Name { get; set; }
+		public int PlayerId { get; set; }
 		public TimeSpan Time { get; set; }
 	}
 }

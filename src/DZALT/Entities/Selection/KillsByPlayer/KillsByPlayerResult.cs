@@ -2,7 +2,7 @@
 {
 	public record KillsByPlayerResult
 	{
-		public string Name { get; set; }
+		public int PlayerId { get; set; }
 		public int Kills { get; set; }
 	}
 }

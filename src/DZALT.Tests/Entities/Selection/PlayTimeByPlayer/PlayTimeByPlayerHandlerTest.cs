@@ -18,14 +18,8 @@ namespace DZALT.Entities.Selection.PlayTimeByPlayer
 		[Fact]
 		public async Task ShouldReturnPlayTimeByPlayer()
 		{
-			var p1 = new Player()
-			{
-				Guid = "p1",
-			};
-			var p2 = new Player()
-			{
-				Guid = "p2",
-			};
+			var p1 = new Player();
+			var p2 = new Player();
 			var logs = new SessionLog[]
 			{
 				new SessionLog()
@@ -75,9 +69,9 @@ namespace DZALT.Entities.Selection.PlayTimeByPlayer
 				default);
 
 			result.Length.Should().Be(2);
-			result.Single(x => x.Name == Helpers.FormatPlayerName(p1.Guid)).Time
+			result.Single(x => x.PlayerId == p1.Id).Time
 				.Should().Be(new TimeSpan(14, 00, 10));
-			result.Single(x => x.Name == Helpers.FormatPlayerName(p2.Guid)).Time
+			result.Single(x => x.PlayerId == p2.Id).Time
 				.Should().Be(new TimeSpan(01, 30, 30));
 		}
 
@@ -95,10 +89,7 @@ namespace DZALT.Entities.Selection.PlayTimeByPlayer
 			DateTime? fromDate = from == null ? null : new DateTime(2023, 11, from.Value);
 			DateTime? toDate = to == null ? null : new DateTime(2023, 11, to.Value);
 
-			var p1 = new Player()
-			{
-				Guid = "p1",
-			};
+			var p1 = new Player();
 			var logs = new SessionLog[]
 			{
 				new SessionLog()
@@ -147,7 +138,7 @@ namespace DZALT.Entities.Selection.PlayTimeByPlayer
 				default);
 
 			result.Length.Should().Be(1);
-			result.Single(x => x.Name == Helpers.FormatPlayerName(p1.Guid)).Time
+			result.Single(x => x.PlayerId == p1.Id).Time
 				.Should().Be(TimeSpan.FromHours(hours));
 		}
 	}

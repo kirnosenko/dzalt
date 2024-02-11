@@ -6,10 +6,10 @@ using Microsoft.AspNetCore.Mvc;
 using MediatR;
 using DZALT.Entities.Selection.KillsByPlayer;
 using DZALT.Entities.Selection.KillsPerHourByPlayer;
-using DZALT.Entities.Selection.LongestShots;
 using DZALT.Entities.Selection.PlayerLog;
 using DZALT.Entities.Selection.PlayerNames;
 using DZALT.Entities.Selection.PlayerRawEvents;
+using DZALT.Entities.Selection.PlayerShots;
 using DZALT.Entities.Selection.PlayTimeByPlayer;
 using DZALT.Entities.Selection.PlayTimeIntersection;
 using DZALT.Entities.Selection.TimeTillFirstKill;
@@ -25,10 +25,14 @@ namespace DZALT.Web.Controllers
 	public class SelectionController : ControllerBase
 	{
 		private readonly IMediator mediator;
+		private readonly IRepository repository;
 
-		public SelectionController(IMediator mediator)
+		public SelectionController(
+			IMediator mediator,
+			IRepository repository)
 		{
 			this.mediator = mediator;
+			this.repository = repository;
 		}
 
 		[HttpGet]
@@ -41,8 +45,15 @@ namespace DZALT.Web.Controllers
 			var data = await mediator.Send(
 				KillsByPlayerQuery.Create(from, to),
 				cancellationToken);
+			var names = await repository.PlayersNames(cancellationToken);
 
-			return Ok(data);
+			return Ok(data
+				.OrderByDescending(x => x.Kills)
+				.Select(x => new
+				{
+					Name = names[x.PlayerId],
+					x.Kills,
+				}));
 		}
 
 		[HttpGet]
@@ -55,23 +66,17 @@ namespace DZALT.Web.Controllers
 			var data = await mediator.Send(
 				KillsPerHourByPlayerQuery.Create(from, to),
 				cancellationToken);
+			var names = await repository.PlayersNames(cancellationToken);
 
-			return Ok(data);
-		}
-
-		[HttpGet]
-		[Route("[action]")]
-		public async Task<IActionResult> LongestShots(
-			[FromQuery] string[] bodyparts,
-			[FromQuery] DateTime? from,
-			[FromQuery] DateTime? to,
-			CancellationToken cancellationToken)
-		{
-			var data = await mediator.Send(
-				LongestShotsQuery.Create(bodyparts, from, to),
-				cancellationToken);
-
-			return Ok(data);
+			return Ok(data
+				.OrderByDescending(x => x.KillsPerHour)
+				.Select(x => new
+				{
+					Name = names[x.PlayerId],
+					x.KillsPerHour,
+					x.Kills,
+					x.Time,
+				}));
 		}
 
 		[HttpGet]
@@ -96,6 +101,32 @@ namespace DZALT.Web.Controllers
 				cancellationToken);
 
 			return Ok(data.Select(x => x.ToString()));
+		}
+
+		[HttpGet]
+		[Route("[action]")]
+		public async Task<IActionResult> PlayerLongestShots(
+			[FromQuery] string[] bodyparts,
+			[FromQuery] DateTime? from,
+			[FromQuery] DateTime? to,
+			CancellationToken cancellationToken)
+		{
+			var data = await mediator.Send(
+				PlayerShotsQuery.Create(bodyparts, from, to),
+				cancellationToken);
+			var names = await repository.PlayersNames(cancellationToken);
+
+			return Ok(data
+				.OrderByDescending(x => x.Distance)
+				.Select(x => new
+				{
+					x.Date,
+					Attacker = names[x.AttackerId],
+					Victim = names[x.VictimId],
+					x.Weapon,
+					x.Bodypart,
+					x.Distance,
+				}));
 		}
 
 		[HttpGet]
@@ -134,8 +165,15 @@ namespace DZALT.Web.Controllers
 			var data = await mediator.Send(
 				PlayTimeByPlayerQuery.Create(from, to),
 				cancellationToken);
+			var names = await repository.PlayersNames(cancellationToken);
 
-			return Ok(data);
+			return Ok(data
+				.OrderByDescending(x => x.Time)
+				.Select(x => new
+				{
+					Name = names[x.PlayerId],
+					x.Time,
+				}));
 		}
 
 		[HttpGet]
@@ -164,8 +202,17 @@ namespace DZALT.Web.Controllers
 			var data = await mediator.Send(
 				TimeTillFirstKillQuery.Create(from, to),
 				cancellationToken);
+			var names = await repository.PlayersNames(cancellationToken);
 
-			return Ok(data);
+			return Ok(data
+				.OrderByDescending(x => x.Time)
+				.Select(x => new
+				{
+					Name = names[x.PlayerId],
+					x.DeathDate,
+					x.KillDate,
+					x.Time,
+				}));
 		}
 
 		[HttpGet]

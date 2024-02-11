@@ -20,8 +20,6 @@ namespace DZALT.Entities.Selection.KillsByPlayer
 			KillsByPlayerQuery query,
 			CancellationToken cancellationToken)
 		{
-			var playerNames = await repository.PlayersNames(cancellationToken);
-			
 			var playerKills = await (
 				from e in repository.Get<EventLog>()
 				where
@@ -29,19 +27,13 @@ namespace DZALT.Entities.Selection.KillsByPlayer
 					(query.To == null || query.To >= e.Date) &&
 					e.Event == EventLog.EventType.MURDER
 				group e.Id by e.EnemyPlayerId into g
-				select new
+				select new KillsByPlayerResult()
 				{
-					Id = g.Key.Value,
+					PlayerId = g.Key.Value,
 					Kills = g.Count(),
 				}).ToArrayAsync(cancellationToken);
 
-			return playerKills
-				.OrderByDescending(x => x.Kills)
-				.Select(x => new KillsByPlayerResult()
-				{
-					Name = playerNames[x.Id],
-					Kills = x.Kills,
-				}).ToArray();
+			return playerKills;
 		}
 	}
 }

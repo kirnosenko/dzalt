@@ -1,11 +1,11 @@
 ﻿using System;
 using MediatR;
 
-namespace DZALT.Entities.Selection.LongestShots
+namespace DZALT.Entities.Selection.PlayerShots
 {
-	public record LongestShotsQuery : IRequest<LongestShotsResult[]>
+	public record PlayerShotsQuery : IRequest<PlayerShotsResult[]>
 	{
-		private LongestShotsQuery()
+		private PlayerShotsQuery()
 		{
 		}
 
@@ -13,11 +13,11 @@ namespace DZALT.Entities.Selection.LongestShots
 		public DateTime? From { get; set; }
 		public DateTime? To { get; set; }
 
-		public static LongestShotsQuery Create(
+		public static PlayerShotsQuery Create(
 			string[] bodyparts = null,
 			DateTime? from = null,
 			DateTime? to = null)
-			=> new LongestShotsQuery()
+			=> new PlayerShotsQuery()
 			{
 				Bodyparts = bodyparts,
 				From = from,

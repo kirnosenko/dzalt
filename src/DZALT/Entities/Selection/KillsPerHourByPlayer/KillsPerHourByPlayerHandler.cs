@@ -3,7 +3,6 @@ using System.Linq;
 using System.Threading;
 using System.Threading.Tasks;
 using MediatR;
-using Microsoft.EntityFrameworkCore;
 using DZALT.Entities.Selection.KillsByPlayer;
 using DZALT.Entities.Selection.PlayTimeByPlayer;
 
@@ -34,15 +33,16 @@ namespace DZALT.Entities.Selection.KillsPerHourByPlayer
 			var killsPerHour = kills
 				.Select(x =>
 				{
-					var tt = time.Single(t => t.Name == x.Name);
+					var pt = time.SingleOrDefault(t => t.PlayerId == x.PlayerId);
+
 					return new KillsPerHourByPlayerResult()
 					{
-						Name = x.Name,
+						PlayerId = x.PlayerId,
 						Kills = x.Kills,
-						Time = tt.Time,
-						KillsPerHour = (decimal)(x.Kills / tt.Time.TotalHours)
+						Time = pt != null ? pt.Time : TimeSpan.FromHours(0),
+						KillsPerHour = pt != null ? (decimal)(x.Kills / pt.Time.TotalHours) : decimal.MaxValue,
 					};
-				}).OrderByDescending(x => x.KillsPerHour).ToArray();
+				}).ToArray();
 
 			return killsPerHour;
 		}

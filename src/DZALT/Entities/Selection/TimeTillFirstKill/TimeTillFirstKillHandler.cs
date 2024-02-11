@@ -20,8 +20,6 @@ namespace DZALT.Entities.Selection.TimeTillFirstKill
 			TimeTillFirstKillQuery query,
 			CancellationToken cancellationToken)
 		{
-			var playerNames = await repository.PlayersNames(cancellationToken);
-
 			var playerKills = await (
 				from kill in repository.Get<EventLog>()
 					.Where(x =>
@@ -45,13 +43,13 @@ namespace DZALT.Entities.Selection.TimeTillFirstKill
 					KillDate = kill.Date,
 					DeathDate = death.Date,
 					Time = kill.Date - death.Date
-				}).OrderBy(x => x.Time).ToArrayAsync(cancellationToken);
+				}).ToArrayAsync(cancellationToken);
 
 
 			return playerKills
 				.Select(x => new TimeTillFirstKillResult()
 				{
-					Name = playerNames[x.Id],
+					PlayerId = x.Id,
 					DeathDate = x.DeathDate,
 					KillDate = x.KillDate,
 					Time = x.Time,

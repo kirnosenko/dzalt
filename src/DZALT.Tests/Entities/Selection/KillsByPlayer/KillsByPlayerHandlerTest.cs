@@ -73,9 +73,9 @@ namespace DZALT.Entities.Selection.KillsByPlayer
 				default);
 
 			result.Length.Should().Be(2);
-			result.Single(x => x.Name == Helpers.FormatPlayerName(p1.Guid)).Kills
+			result.Single(x => x.PlayerId == p1.Id).Kills
 				.Should().Be(2);
-			result.Single(x => x.Name == Helpers.FormatPlayerName(p2.Guid)).Kills
+			result.Single(x => x.PlayerId == p2.Id).Kills
 				.Should().Be(1);
 		}
 	}

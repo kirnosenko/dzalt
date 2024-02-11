@@ -5,23 +5,21 @@ using System.Threading.Tasks;
 using MediatR;
 using Microsoft.EntityFrameworkCore;
 
-namespace DZALT.Entities.Selection.LongestShots
+namespace DZALT.Entities.Selection.PlayerShots
 {
-	public class LongestShotsHandler : IRequestHandler<LongestShotsQuery, LongestShotsResult[]>
+	public class PlayerShotsHandler : IRequestHandler<PlayerShotsQuery, PlayerShotsResult[]>
 	{
 		private readonly IRepository repository;
 
-		public LongestShotsHandler(IRepository repository)
+		public PlayerShotsHandler(IRepository repository)
 		{
 			this.repository = repository;
 		}
 
-		public async Task<LongestShotsResult[]> Handle(
-			LongestShotsQuery query,
+		public async Task<PlayerShotsResult[]> Handle(
+			PlayerShotsQuery query,
 			CancellationToken cancellationToken)
 		{
-			var playerNames = await repository.PlayersNames(cancellationToken);
-
 			var playerShots = await (
 				from e in repository.Get<EventLog>()
 				where
@@ -30,7 +28,6 @@ namespace DZALT.Entities.Selection.LongestShots
 					e.Event == EventLog.EventType.HIT &&
 					e.EnemyPlayerId != null &&
 					e.Distance != null
-				orderby e.Distance descending
 				select new
 				{
 					e.Date,
@@ -46,11 +43,11 @@ namespace DZALT.Entities.Selection.LongestShots
 					query.Bodyparts == null ||
 					query.Bodyparts.Length == 0 ||
 					query.Bodyparts.Any(bp => x.BodyPart.StartsWith(bp)))
-				.Select(x => new LongestShotsResult()
+				.Select(x => new PlayerShotsResult()
 				{
 					Date = x.Date,
-					Attacker = playerNames[x.EnemyPlayerId.Value],
-					Victim = playerNames[x.PlayerId],
+					AttackerId = x.EnemyPlayerId.Value,
+					VictimId = x.PlayerId,
 					Weapon = x.Weapon,
 					Bodypart = x.BodyPart,
 					Distance = x.Distance.Value,
