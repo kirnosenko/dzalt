@@ -34,7 +34,7 @@ namespace DZALT
 					x.Name == name ||
 					p.Guid == name ||
 					p.Guid.EndsWith(name)
-				select p.Id).ToArrayAsync(cancellationToken);
+				select p.Id).Distinct().ToArrayAsync(cancellationToken);
 
 			return playerIds.Length switch
 			{
