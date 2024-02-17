@@ -36,7 +36,7 @@ namespace DZALT.Entities.Selection.MultipleHits
 					Shots = g.Count(),
 					Weapon = g.Key.Weapon,
 					Distance = g.Average(x => x.Value),
-				}).ToArrayAsync(cancellationToken);
+				}).Where(x => x.Shots > 1).ToArrayAsync(cancellationToken);
 
 			return hits;
 		}

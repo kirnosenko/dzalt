@@ -95,7 +95,8 @@ namespace DZALT.Web.Controllers
 			var names = await repository.PlayersNames(cancellationToken);
 
 			return Ok(data
-				.OrderByDescending(x => x.Shots)
+				.OrderBy(x => x.Weapon)
+				.ThenByDescending(x => x.Shots)
 				.Select(x => new
 				{
 					Name = names[x.PlayerId],
