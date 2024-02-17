@@ -17,6 +17,7 @@ using DZALT.Entities.Selection.PlayTimeIntersection;
 using DZALT.Entities.Selection.SameNames;
 using DZALT.Entities.Selection.TimeTillFirstKill;
 using DZALT.Entities.Selection.TouchedPlayers;
+using DZALT.Entities.Selection.Weapons;
 using System.Linq;
 
 namespace DZALT.Web.Controllers
@@ -87,21 +88,22 @@ namespace DZALT.Web.Controllers
 		public async Task<IActionResult> MultipleHits(
 			[FromQuery] DateTime? from,
 			[FromQuery] DateTime? to,
+			[FromQuery] bool invalidOnly,
 			CancellationToken cancellationToken)
 		{
 			var data = await mediator.Send(
-				MultipleHitsQuery.Create(from, to),
+				MultipleHitsQuery.Create(from, to, invalidOnly),
 				cancellationToken);
 			var names = await repository.PlayersNames(cancellationToken);
 
 			return Ok(data
 				.OrderBy(x => x.Weapon)
-				.ThenByDescending(x => x.Shots)
+				.ThenByDescending(x => x.Hits)
 				.Select(x => new
 				{
 					Name = names[x.PlayerId],
 					x.Date,
-					x.Shots,
+					x.Hits,
 					x.Weapon,
 					x.Distance,
 				}));
@@ -287,6 +289,22 @@ namespace DZALT.Web.Controllers
 				cancellationToken);
 
 			return Ok(data);
+		}
+
+		[HttpGet]
+		[Route("[action]")]
+		public async Task<IActionResult> Weapons(
+			[FromQuery] DateTime? from,
+			[FromQuery] DateTime? to,
+			[FromQuery] bool excludeMelee,
+			[FromQuery] bool excludeDistance,
+			CancellationToken cancellationToken)
+		{
+			var data = await mediator.Send(
+				WeaponsQuery.Create(from, to, excludeMelee, excludeDistance),
+				cancellationToken);
+			
+			return Ok(data.OrderBy(x => x.Weapon));
 		}
 	}
 }

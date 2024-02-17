@@ -6,7 +6,7 @@ namespace DZALT.Entities.Selection.MultipleHits
 	{
 		public int PlayerId { get; set; }
 		public DateTime Date { get; set; }
-		public int Shots { get; set; }
+		public int Hits { get; set; }
 		public string Weapon { get; set; }
 		public decimal Distance { get; set; }
 	}
