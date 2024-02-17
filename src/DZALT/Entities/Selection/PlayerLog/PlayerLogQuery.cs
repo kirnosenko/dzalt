@@ -1,4 +1,5 @@
-﻿using MediatR;
+﻿using System;
+using MediatR;
 
 namespace DZALT.Entities.Selection.PlayerLog
 {
@@ -8,6 +9,8 @@ namespace DZALT.Entities.Selection.PlayerLog
 		{
 		}
 
+		public DateTime? From { get; set; }
+		public DateTime? To { get; set; }
 		public string PlayerNickOrGuid { get; init; }
 		public bool IncludeSessions { get; init; }
 		public bool IncludeHits { get; init; }
@@ -16,6 +19,8 @@ namespace DZALT.Entities.Selection.PlayerLog
 		public bool IncludeAccidents { get; init; }
 
 		public static PlayerLogQuery Create(
+			DateTime? from,
+			DateTime? to,
 			string playerNickOrGuid,
 			bool includeSessions = true,
 			bool includeHits = true,
@@ -24,6 +29,8 @@ namespace DZALT.Entities.Selection.PlayerLog
 			bool includeAccidents = true)
 			=> new PlayerLogQuery()
 			{
+				From = from,
+				To = to,
 				PlayerNickOrGuid = playerNickOrGuid,
 				IncludeSessions = includeSessions,
 				IncludeHits = includeHits,

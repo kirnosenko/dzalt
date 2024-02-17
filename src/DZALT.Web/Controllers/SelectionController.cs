@@ -6,6 +6,7 @@ using Microsoft.AspNetCore.Mvc;
 using MediatR;
 using DZALT.Entities.Selection.KillsByPlayer;
 using DZALT.Entities.Selection.KillsPerHourByPlayer;
+using DZALT.Entities.Selection.MultipleHits;
 using DZALT.Entities.Selection.PlayerLog;
 using DZALT.Entities.Selection.PlayerNames;
 using DZALT.Entities.Selection.PlayerRawEvents;
@@ -13,6 +14,7 @@ using DZALT.Entities.Selection.PlayerShots;
 using DZALT.Entities.Selection.PlayersWithMultipleNames;
 using DZALT.Entities.Selection.PlayTimeByPlayer;
 using DZALT.Entities.Selection.PlayTimeIntersection;
+using DZALT.Entities.Selection.SameNames;
 using DZALT.Entities.Selection.TimeTillFirstKill;
 using DZALT.Entities.Selection.TouchedPlayers;
 using System.Linq;
@@ -82,7 +84,33 @@ namespace DZALT.Web.Controllers
 
 		[HttpGet]
 		[Route("[action]")]
+		public async Task<IActionResult> MultipleHits(
+			[FromQuery] DateTime? from,
+			[FromQuery] DateTime? to,
+			CancellationToken cancellationToken)
+		{
+			var data = await mediator.Send(
+				MultipleHitsQuery.Create(from, to),
+				cancellationToken);
+			var names = await repository.PlayersNames(cancellationToken);
+
+			return Ok(data
+				.OrderByDescending(x => x.Shots)
+				.Select(x => new
+				{
+					Name = names[x.PlayerId],
+					x.Date,
+					x.Shots,
+					x.Weapon,
+					x.Distance,
+				}));
+		}
+
+		[HttpGet]
+		[Route("[action]")]
 		public async Task<IActionResult> PlayerLog(
+			[FromQuery] DateTime? from,
+			[FromQuery] DateTime? to,
 			[FromQuery] string nickname,
 			[FromQuery] bool includeSessions,
 			[FromQuery] bool includeHits,
@@ -93,6 +121,8 @@ namespace DZALT.Web.Controllers
 		{
 			var data = await mediator.Send(
 				PlayerLogQuery.Create(
+					from,
+					to,
 					nickname,
 					includeSessions,
 					includeHits,
@@ -202,6 +232,20 @@ namespace DZALT.Web.Controllers
 		{
 			var data = await mediator.Send(
 				PlayTimeIntersectionQuery.Create(player1, player2, from, to),
+				cancellationToken);
+
+			return Ok(data);
+		}
+
+		[HttpGet]
+		[Route("[action]")]
+		public async Task<IActionResult> SameNamesHandler(
+			[FromQuery] DateTime? from,
+			[FromQuery] DateTime? to,
+			CancellationToken cancellationToken)
+		{
+			var data = await mediator.Send(
+				SameNamesQuery.Create(from, to),
 				cancellationToken);
 
 			return Ok(data);
