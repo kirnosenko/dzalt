@@ -20,12 +20,12 @@ namespace DZALT
 			return $"{nickname}({guid})";
 		}
 
-		public static async Task<int> PlayerIdByName(
+		public static async Task<int[]> PlayerIdsByName(
 			this IRepository repository,
 			string name,
 			CancellationToken cancellationToken)
 		{
-			var playerIds = await(
+			var playerIds = await (
 				from p in repository.Get<Player>()
 				join n in repository.Get<Nickname>()
 					on p.Id equals n.PlayerId into leftjoin
@@ -35,6 +35,16 @@ namespace DZALT
 					p.Guid == name ||
 					p.Guid.EndsWith(name)
 				select p.Id).Distinct().ToArrayAsync(cancellationToken);
+
+			return playerIds;
+		}
+
+		public static async Task<int> PlayerIdByName(
+			this IRepository repository,
+			string name,
+			CancellationToken cancellationToken)
+		{
+			var playerIds = await repository.PlayerIdsByName(name, cancellationToken);
 
 			return playerIds.Length switch
 			{

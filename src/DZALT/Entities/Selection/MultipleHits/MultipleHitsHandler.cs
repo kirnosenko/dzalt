@@ -77,6 +77,10 @@ namespace DZALT.Entities.Selection.MultipleHits
 			MultipleHitsQuery query,
 			CancellationToken cancellationToken)
 		{
+			var playerId = string.IsNullOrEmpty(query.PlayerNickOrGuid)
+				? (int?)null
+				: await repository.PlayerIdByName(query.PlayerNickOrGuid, cancellationToken);
+
 			var hits = await (
 				from e in repository.Get<EventLog>()
 				where
@@ -84,7 +88,8 @@ namespace DZALT.Entities.Selection.MultipleHits
 					(query.To == null || query.To >= e.Date) &&
 					e.Event == EventLog.EventType.HIT &&
 					e.EnemyPlayerId != null &&
-					e.Distance != null
+					e.Distance != null &&
+					(playerId == null || e.EnemyPlayerId == playerId)
 				group e.Distance by new { e.EnemyPlayerId, e.Date, e.Weapon } into g
 				select new MultipleHitsResult()
 				{

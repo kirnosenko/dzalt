@@ -88,11 +88,12 @@ namespace DZALT.Web.Controllers
 		public async Task<IActionResult> MultipleHits(
 			[FromQuery] DateTime? from,
 			[FromQuery] DateTime? to,
+			[FromQuery] string playerNickOrGuid,
 			[FromQuery] bool invalidOnly,
 			CancellationToken cancellationToken)
 		{
 			var data = await mediator.Send(
-				MultipleHitsQuery.Create(from, to, invalidOnly),
+				MultipleHitsQuery.Create(from, to, playerNickOrGuid, invalidOnly),
 				cancellationToken);
 			var names = await repository.PlayersNames(cancellationToken);
 
