@@ -41,16 +41,17 @@ namespace DZALT.Entities.Selection.MultipleHits
 			{ "SSG 82", 1 },
 			{ "USG-45", 10 },
 			{ "Арбалет", 1 },
-			{ "БK-12", 1 }, // depends on ammo
-			{ "Обрез БK-12", 1 }, // depends on ammo
-			{ "БK-18", 8 },
-			{ "Обрез БK-18", 8 },
+			{ "БK-12", 8 }, // depends on ammo
+			{ "Обрез БK-12", 8 }, // depends on ammo
+			{ "БK-18", 1 },
+			{ "Обрез БK-18", 1 },
 			{ "Бизон", 10 },
-			{ "БК-133", 1 }, // depends on ammo
-			{ "БК-43", 1 },  // depends on ammo
-			{ "Обрез БК-43", 1 }, // depends on ammo
-			{ "Вайга", 7 }, // depends on ammo
+			{ "БК-133", 8 }, // depends on ammo
+			{ "БК-43", 8 },  // depends on ammo
+			{ "Обрез БК-43", 8 }, // depends on ammo
+			{ "Вайга", 8 }, // depends on ammo
 			{ "Винтовка Мосин 91/30", 1 },
+			{ "Вихрь", 15 },
 			{ "ВСД", 7 },
 			{ "ВСС", 15 },
 			{ "Дерринджер", 1 },
