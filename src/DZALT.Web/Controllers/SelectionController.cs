@@ -1,4 +1,5 @@
 ﻿using System;
+using System.Linq;
 using System.Threading;
 using System.Threading.Tasks;
 using Asp.Versioning;
@@ -18,7 +19,6 @@ using DZALT.Entities.Selection.SameNames;
 using DZALT.Entities.Selection.TimeTillFirstKill;
 using DZALT.Entities.Selection.TouchedPlayers;
 using DZALT.Entities.Selection.Weapons;
-using System.Linq;
 
 namespace DZALT.Web.Controllers
 {
@@ -90,6 +90,7 @@ namespace DZALT.Web.Controllers
 			[FromQuery] DateTime? to,
 			[FromQuery] string playerNickOrGuid,
 			[FromQuery] bool invalidOnly,
+			[FromQuery] bool perPlayer,
 			CancellationToken cancellationToken)
 		{
 			var data = await mediator.Send(
@@ -97,17 +98,26 @@ namespace DZALT.Web.Controllers
 				cancellationToken);
 			var names = await repository.PlayersNames(cancellationToken);
 
-			return Ok(data
-				.OrderBy(x => x.Weapon)
-				.ThenByDescending(x => x.Hits)
-				.Select(x => new
-				{
-					Name = names[x.PlayerId],
-					x.Date,
-					x.Hits,
-					x.Weapon,
-					x.Distance,
-				}));
+			return Ok(!perPlayer
+				? data
+					.OrderBy(x => x.Weapon)
+					.ThenByDescending(x => x.Hits)
+					.Select(x => new
+					{
+						Name = names[x.PlayerId],
+						x.Date,
+						x.Hits,
+						x.Weapon,
+						x.Distance,
+					})
+				: data
+					.GroupBy(x => x.PlayerId)
+					.OrderByDescending(x => x.Count())
+					.Select(x => new
+					{
+						Name = names[x.Key],
+						Count = x.Count(),
+					}));
 		}
 
 		[HttpGet]
