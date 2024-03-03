@@ -57,6 +57,7 @@ namespace DZALT.Web.Controllers
 				{
 					Name = names[x.PlayerId],
 					x.Kills,
+					x.Deaths,
 				}));
 		}
 
