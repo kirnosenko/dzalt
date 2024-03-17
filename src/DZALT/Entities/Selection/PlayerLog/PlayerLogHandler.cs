@@ -1,5 +1,6 @@
 ﻿using System;
 using System.Linq;
+using System.Numerics;
 using System.Threading;
 using System.Threading.Tasks;
 using MediatR;
@@ -63,6 +64,14 @@ namespace DZALT.Entities.Selection.PlayerLog
 					hit.BodyPart,
 				}).ToArrayAsync(cancellationToken);
 			var hitsLogs = hits
+				?.Where(e => 
+					query.LocationX == null ||
+					query.LocationY == null ||
+					query.LocationRadius == null ||
+					Distance(e.X, e.Y, query.LocationX.Value, query.LocationY.Value) < query.LocationRadius ||
+					e.EnemyPlayerX == null ||
+					e.EnemyPlayerY == null ||
+					Distance(e.EnemyPlayerX.Value, e.EnemyPlayerY.Value, query.LocationX.Value, query.LocationY.Value) < query.LocationRadius)
 				?.Select(e => PlayerHitLog.Create(
 					e.Date,
 					e.PlayerId == playerId ? playerName : playerNames[e.PlayerId],
@@ -110,6 +119,14 @@ namespace DZALT.Entities.Selection.PlayerLog
 					hit.BodyPart,
 				}).ToArrayAsync(cancellationToken);
 			var killsLogs = kills
+				?.Where(e =>
+					query.LocationX == null ||
+					query.LocationY == null ||
+					query.LocationRadius == null ||
+					Distance(e.X, e.Y, query.LocationX.Value, query.LocationY.Value) < query.LocationRadius ||
+					e.EnemyPlayerX == null ||
+					e.EnemyPlayerY == null ||
+					Distance(e.EnemyPlayerX.Value, e.EnemyPlayerY.Value, query.LocationX.Value, query.LocationY.Value) < query.LocationRadius)
 				?.Select(e => PlayerKillLog.Create(
 					e.Date,
 					e.PlayerId == playerId ? playerName : playerNames[e.PlayerId],
@@ -134,6 +151,11 @@ namespace DZALT.Entities.Selection.PlayerLog
 						l.Event == EventLog.EventType.SUICIDE)
 					.ToArrayAsync(cancellationToken);
 			var suicidesLogs = suicides
+				?.Where(e =>
+					query.LocationX == null ||
+					query.LocationY == null ||
+					query.LocationRadius == null ||
+					Distance(e.X, e.Y, query.LocationX.Value, query.LocationY.Value) < query.LocationRadius)
 				?.Select<EventLog, PlayerLog>(s => 
 					PlayerSuicideLog.Create(
 						s.Date,
@@ -152,6 +174,11 @@ namespace DZALT.Entities.Selection.PlayerLog
 						l.Event == EventLog.EventType.ACCIDENT)
 					.ToArrayAsync(cancellationToken);
 			var accidentsLogs = accidents
+				?.Where(e =>
+					query.LocationX == null ||
+					query.LocationY == null ||
+					query.LocationRadius == null ||
+					Distance(e.X, e.Y, query.LocationX.Value, query.LocationY.Value) < query.LocationRadius)
 				?.Select<EventLog, PlayerLog>(s =>
 					PlayerAccidentLog.Create(
 						s.Date,
@@ -169,6 +196,13 @@ namespace DZALT.Entities.Selection.PlayerLog
 				.Concat(accidentsLogs)
 				.OrderBy(x => x.Date)
 				.ToArray();
+		}
+
+		private decimal Distance(decimal v1x, decimal v1y, decimal v2x, decimal v2y)
+		{
+			decimal v1 = v1x - v2x;
+			decimal v2 = v1y - v2y;
+			return (decimal)MathF.Sqrt((float)((v1 * v1) + (v2 * v2)));
 		}
 	}
 }

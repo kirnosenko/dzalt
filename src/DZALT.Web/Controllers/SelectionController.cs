@@ -126,6 +126,9 @@ namespace DZALT.Web.Controllers
 		public async Task<IActionResult> PlayerLog(
 			[FromQuery] DateTime? from,
 			[FromQuery] DateTime? to,
+			[FromQuery] decimal? locationX,
+			[FromQuery] decimal? locationY,
+			[FromQuery] decimal? locationRadius,
 			[FromQuery] string nickname,
 			[FromQuery] bool includeSessions,
 			[FromQuery] bool includeHits,
@@ -138,6 +141,9 @@ namespace DZALT.Web.Controllers
 				PlayerLogQuery.Create(
 					from,
 					to,
+					locationX,
+					locationY,
+					locationRadius,
 					nickname,
 					includeSessions,
 					includeHits,

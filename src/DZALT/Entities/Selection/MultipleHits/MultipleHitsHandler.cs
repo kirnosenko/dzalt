@@ -88,8 +88,8 @@ namespace DZALT.Entities.Selection.MultipleHits
 					(query.From == null || query.From <= e.Date) &&
 					(query.To == null || query.To >= e.Date) &&
 					e.Event == EventLog.EventType.HIT &&
-					e.EnemyPlayerId != null &&
 					e.Distance != null &&
+					e.EnemyPlayerId != null &&
 					(playerId == null || e.EnemyPlayerId == playerId)
 				group e.Distance by new { e.EnemyPlayerId, e.Date, e.Weapon } into g
 				select new MultipleHitsResult()
@@ -101,6 +101,24 @@ namespace DZALT.Entities.Selection.MultipleHits
 					Distance = g.Average(x => x.Value),
 				}).Where(x => x.Hits > 1).ToArrayAsync(cancellationToken);
 
+			var hitsMelee = await (
+				from e in repository.Get<EventLog>()
+				where
+					(query.From == null || query.From <= e.Date) &&
+					(query.To == null || query.To >= e.Date) &&
+					e.Event == EventLog.EventType.HIT &&
+					e.Distance == null &&
+					e.EnemyPlayerId != null &&
+					(playerId == null || e.EnemyPlayerId == playerId)
+				group e.Distance by new { e.EnemyPlayerId, e.Date, e.Weapon } into g
+				select new MultipleHitsResult()
+				{
+					PlayerId = g.Key.EnemyPlayerId.Value,
+					Date = g.Key.Date,
+					Hits = g.Count(),
+					Weapon = g.Key.Weapon,
+				}).Where(x => x.Hits > 2).ToArrayAsync(cancellationToken);
+
 			if (query.InvalidOnly)
 			{
 				hits = hits
@@ -108,7 +126,7 @@ namespace DZALT.Entities.Selection.MultipleHits
 					.ToArray();
 			}
 
-			return hits;
+			return hits.Concat(hitsMelee).ToArray();
 		}
 	}
 }

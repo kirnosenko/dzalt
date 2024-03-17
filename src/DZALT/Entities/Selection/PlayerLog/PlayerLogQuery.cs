@@ -11,6 +11,9 @@ namespace DZALT.Entities.Selection.PlayerLog
 
 		public DateTime? From { get; set; }
 		public DateTime? To { get; set; }
+		public decimal? LocationX { get; set; }
+		public decimal? LocationY { get; set; }
+		public decimal? LocationRadius { get; set; }
 		public string PlayerNickOrGuid { get; init; }
 		public bool IncludeSessions { get; init; }
 		public bool IncludeHits { get; init; }
@@ -21,6 +24,9 @@ namespace DZALT.Entities.Selection.PlayerLog
 		public static PlayerLogQuery Create(
 			DateTime? from,
 			DateTime? to,
+			decimal? locationX,
+			decimal? locationY,
+			decimal? locationRadius,
 			string playerNickOrGuid,
 			bool includeSessions = true,
 			bool includeHits = true,
@@ -31,6 +37,9 @@ namespace DZALT.Entities.Selection.PlayerLog
 			{
 				From = from,
 				To = to,
+				LocationX = locationX,
+				LocationY = locationY,
+				LocationRadius = locationRadius,
 				PlayerNickOrGuid = playerNickOrGuid,
 				IncludeSessions = includeSessions,
 				IncludeHits = includeHits,
